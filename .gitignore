@@ -1,0 +1,44 @@
+# Build artifacts
+build/
+*.xc
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# SLURM logs
+logs/
+*.out
+*.err
+
+# Simulation output (lives in scratch, not here)
+*.bp
+*.h5
+*.hdf5
+output/
+checkpoint/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/
+
+# Analysis plots (generated, not source)
+plots/
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Claude / Codex internals
+.claude/
+.codex/
+
+# Entity subrepositories (tracked separately upstream)
+turb2d/entity/
+radiative/entity/
