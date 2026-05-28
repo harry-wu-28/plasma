@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(2>&1)",
+      "Bash(mkdir -p /dartfs-hpc/rc/home/2/f007hd2/plasma/radiative/rad/analysis/scripts && mv /dartfs-hpc/rc/home/2/f007hd2/plasma/radiative/rad/analysis/*.py /dartfs-hpc/rc/home/2/f007hd2/plasma/radiative/rad/analysis/scripts/ && ls /dartfs-hpc/rc/home/2/f007hd2/plasma/radiative/rad/analysis/scripts/)",
+      "Bash(mkdir -p ~/dependencies/kokkos/build ~/dependencies/kokkos/install && echo \"done\")",
+      "Bash(module load *)",
+      "Bash(cmake -S /dartfs-hpc/rc/home/5/f007gj5/kokkos -B ~/dependencies/kokkos/build -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_AMPERE80=ON -DKokkos_ARCH_ADA89=ON -DKokkos_ENABLE_CUDA_UVM=ON -DCMAKE_INSTALL_PREFIX=~/dependencies/kokkos/install)",
+      "Bash(git config *)",
+      "Bash(cmake -S /dartfs-hpc/rc/home/5/f007gj5/kokkos -B ~/dependencies/kokkos/build -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_ADA89=ON -DKokkos_ENABLE_CUDA_UVM=ON -DCMAKE_INSTALL_PREFIX=~/dependencies/kokkos/install)"
+    ],
+    "additionalDirectories": [
+      "/dartfs-hpc/rc/home/2/f007hd2/plasma/radiative/rad/analysis",
+      "/dartfs-hpc/rc/home/2/f007hd2/dependencies/kokkos"
+    ]
+  }
+}

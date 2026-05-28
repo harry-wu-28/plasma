@@ -1,0 +1,70 @@
+[simulation]
+  name    = "turbulence"
+  engine  = "srpic"
+  runtime = 1200.0
+
+[grid]
+  resolution    = [256, 256]
+  extent        = [[-64.0, 64.0], [-64.0, 64.0]]
+  decomposition = [2, 2]
+
+  [grid.metric]
+    metric = "minkowski"
+
+  [grid.boundaries]
+    fields    = [["PERIODIC"], ["PERIODIC"]]
+    particles = [["PERIODIC"], ["PERIODIC"]]
+
+[scales]
+  larmor0    = 1.0
+  skindepth0 = 1.0
+
+[algorithms]
+  current_filters = 4
+
+  [algorithms.timestep]
+    CFL = 0.5
+
+[particles]
+  ppc0 = 32.0
+
+  [[particles.species]]
+    label    = "e-_p"
+    mass     = 1.0
+    charge   = -1.0
+    maxnpart = 2e7
+
+  [[particles.species]]
+    label    = "e+_p"
+    mass     = 1.0
+    charge   = 1.0
+    maxnpart = 2e7
+
+[setup]
+  temperature = 1e0
+  dB          = 1.0
+  omega_0     = 0.0156
+  gamma_0     = 0.0078
+
+
+[output]
+  format        = "BPFile"
+  interval_time = 24.0
+
+  [output.fields]
+    enable = true
+    quantities = ["N_1", "N_2", "Rho_1", "Rho_2", "J", "B", "E", "V_1", "V_2", "Tij_1", "Tij_2"]
+    downsampling = [1, 1]
+    
+  [output.particles]
+    enable = true
+    stride = 100
+
+  [output.spectra]
+    enable = true
+
+  [output.stats]
+    enable = true 
+
+[diagnostics]
+  colored_stdout = true

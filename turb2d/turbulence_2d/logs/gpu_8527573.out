@@ -1,0 +1,145 @@
+=== GPU Turbulence Simulation ===
+Start: Thu May  7 03:59:34 EDT 2026
+Node: l40sx8.hpcc.dartmouth.edu
+
+=== Loaded Modules ===
+
+=== GPU Information ===
+name, memory.total [MiB], compute_cap
+NVIDIA L40S, 46068 MiB, 8.9
+NVIDIA L40S, 46068 MiB, 8.9
+
+=== Working Directory ===
+/dartfs-hpc/scratch/f007hd2/turb2d
+total 0
+drwxr-xr-x 2 f007hd2 rc-users 4.0K May  7 03:54 turbulence
+drwxr-xr-x 2 f007hd2 rc-users 4.0K May  7 03:30 turbulence.ckpt
+[93mWARN  : Key setup.escape_dist not found, falling back to default
+[0m[0K[93mWARN  : see the `*.err` file for more details
+[0m[0K[93mWARN  : Key setup.seed not found, falling back to default
+[0m[0K[93mWARN  : see the `*.err` file for more details
+[0m[0K
+
+[90m╔══════════════════════════════════════════════════════════╗[0m
+[90m║[0m [92mEntity v1.3.3[0m                                            [90m║[0m
+[90m╚══════════════════════════════════════════════════════════╝[0m
+
+    [34mBackend[0m
+    [90m-[0m Build hash: [93m5bf97fdd340a688a84b1273511394d409273cf8a[0m
+    [90m-[0m CXX: [93mGNU GCC/G++ 8.5.0 20210514 (Red Hat 8.5.0-28) [C++17][0m
+    [90m-[0m CUDA: [93m12.0.0[0m
+    [90m-[0m MPI: [93m3.1[0m
+    [90m-[0m GPU-aware MPI: [93mON[0m
+    [90m-[0m Kokkos: [93m4.6.1[0m
+    [90m-[0m ADIOS2: [93m2.10.0[0m
+    [90m-[0m Precision: [93msingle[0m
+    [90m-[0m Debug: [93mOFF[0m
+
+    [34mCompilation flags[0m
+    [90m-[0m SINGLE_PRECISION: [93mON[0m
+    [90m-[0m OUTPUT_ENABLED: [93mON[0m
+    [90m-[0m DEBUG: [93mOFF[0m
+    [90m-[0m CUDA_ENABLED: [93mON[0m
+    [90m-[0m HIP_ENABLED: [93mOFF[0m
+    [90m-[0m DEVICE_ENABLED: [93mON[0m
+    [90m-[0m MPI_ENABLED: [93mON[0m
+    [90m-[0m GPU_AWARE_MPI: [93mON[0m
+
+    [34mConfiguration[0m
+    [90m-[0m Name: [93mturbulence[0m
+    [90m-[0m Problem generator: [93mturbulence[0m
+    [90m-[0m Engine: [93msrpic[0m
+    [90m-[0m Metric: [93mminkowski[0m
+    [90m-[0m Deposit: [93mzigzag[0m
+    [90m-[0m Timestep [dt]: [93m1.768e-01[0m
+    [90m-[0m Runtime: [93m1.200e+03 [6788 steps][0m
+
+    [34mGlobal domain[0m
+    [90m-[0m Resolution: [93m[256, 256][0m
+    [90m-[0m Extent: [93m[{-64, 64}, {-64, 64}][0m
+    [90m-[0m Fiducial cell size [dx0]: [93m3.536e-01[0m
+    [90m-[0m Boundary conditions:
+      [90m-[0m Fields: [93m[{periodic, periodic}, {periodic, periodic}][0m
+      [90m-[0m Particles: [93m[{periodic, periodic}, {periodic, periodic}][0m
+    [90m-[0m Domain decomposition: [93m[1, 2] [2 total][0m
+
+    [34mFiducial parameters[0m
+    [90m-[0m Particles per cell [ppc0]: [93m32.0[0m
+    [90m-[0m Larmor radius [larmor0]: [93m1.000e+00 [2.828 dx0][0m
+    [90m-[0m Larmor frequency [omegaB0 * dt]: [93m1.768e-01[0m
+    [90m-[0m Skin depth [skindepth0]: [93m1.000e+00 [2.828 dx0][0m
+    [90m-[0m Plasma frequency [omp0 * dt]: [93m1.768e-01[0m
+    [90m-[0m Magnetization [sigma0]: [93m1.000e+00[0m
+
+    [34mParticles[0m
+    [90m-[0m Species #1:
+      [90m-[0m Label: [93me-_p[0m
+      [90m-[0m Mass: [93m1.0[0m
+      [90m-[0m Charge: [93m-1.0[0m
+      [90m-[0m Max #: [93m20000000 [per domain][0m
+      [90m-[0m Pusher: [93mboris[0m
+      [90m-[0m GCA: [93mOFF[0m
+      [90m-[0m Cooling: [93mnone[0m
+      [90m-[0m # of real-value payloads: [93m0[0m
+      [90m-[0m # of integer-value payloads: [93m0[0m
+    [90m-[0m Species #2:
+      [90m-[0m Label: [93me+_p[0m
+      [90m-[0m Mass: [93m1.0[0m
+      [90m-[0m Charge: [93m1.0[0m
+      [90m-[0m Max #: [93m20000000 [per domain][0m
+      [90m-[0m Pusher: [93mboris[0m
+      [90m-[0m GCA: [93mOFF[0m
+      [90m-[0m Cooling: [93mnone[0m
+      [90m-[0m # of real-value payloads: [93m0[0m
+      [90m-[0m # of integer-value payloads: [93m0[0m
+
+[0m[0K
+    [34mDomains[0m
+
+[0m[0K    [90m-[0m Domain #0:
+      [90m-[0m Rank: [93m0[0m
+      [90m-[0m Resolution: [93m[256, 128][0m
+      [90m-[0m Extent: [93m[{-64, 64}, {-64, 0}][0m
+      [90m-[0m Boundary conditions:
+              [flds]      [prtl]      [neighbor]
+        - - : [93msync        sync        1         [0m
+        - 0 : [93mperiodic    periodic    .         [0m
+        - + : [93msync        sync        1         [0m
+        0 - : [93msync        sync        1         [0m
+        0 + : [93msync        sync        1         [0m
+        + - : [93msync        sync        1         [0m
+        + 0 : [93mperiodic    periodic    .         [0m
+        + + : [93msync        sync        1         [0m
+      [90m-[0m Memory footprint:
+        [90m-[0m Fields: [93m2.36 MB[0m
+        [90m-[0m Particles:
+          [90m-[0m Species #1 (e-_p): [93m953.67 MB[0m
+          [90m-[0m Species #2 (e+_p): [93m953.67 MB[0m
+
+    [90m-[0m Domain #1:
+      [90m-[0m Rank: [93m1[0m
+      [90m-[0m Resolution: [93m[256, 128][0m
+      [90m-[0m Extent: [93m[{-64, 64}, {0, 64}][0m
+      [90m-[0m Boundary conditions:
+              [flds]      [prtl]      [neighbor]
+        - - : [93msync        sync        0         [0m
+        - 0 : [93mperiodic    periodic    .         [0m
+        - + : [93msync        sync        0         [0m
+        0 - : [93msync        sync        0         [0m
+        0 + : [93msync        sync        0         [0m
+        + - : [93msync        sync        0         [0m
+        + 0 : [93mperiodic    periodic    .         [0m
+        + + : [93msync        sync        0         [0m
+      [90m-[0m Memory footprint:
+        [90m-[0m Fields: [93m2.36 MB[0m
+        [90m-[0m Particles:
+          [90m-[0m Species #1 (e-_p): [93m953.67 MB[0m
+          [90m-[0m Species #2 (e+_p): [93m953.67 MB[0m
+
+
+
+Elapsed time: 1 seconds
+
+=== Finished ===
+Exit code: 139
+End: Thu May  7 03:59:35 EDT 2026
