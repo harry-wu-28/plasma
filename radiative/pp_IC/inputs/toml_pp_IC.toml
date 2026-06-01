@@ -1,0 +1,93 @@
+[simulation]
+  name    = "pp_IC"
+  engine  = "srpic"
+  runtime = 1000.0
+
+[grid]
+  resolution = [512, 512]
+  extent     = [[-128.0, 128.0], [-128.0, 128.0]]
+
+  [grid.metric]
+    metric = "minkowski"
+
+  [grid.boundaries]
+    fields    = [["PERIODIC"], ["PERIODIC"]]
+    particles = [["PERIODIC"], ["PERIODIC"]]
+
+[scales]
+  larmor0    = 1.0
+  skindepth0 = 1.0
+
+[algorithms]
+  current_filters = 8
+
+  [algorithms.timestep]
+    CFL = 0.5
+
+  [algorithms.fieldsolver]
+    enable = false
+
+[particles]
+  ppc0 = 8.0
+
+  [[particles.species]]
+    label    = "e-_p"
+    mass     = 1.0
+    charge   = -1.0
+    maxnpart = 1e8
+
+  [[particles.species]]
+    label    = "e+_p"
+    mass     = 1.0
+    charge   = 1.0
+    maxnpart = 1e8
+
+  [[particles.species]]
+    label    = "phot"
+    mass     = 0.0
+    charge   = 0.0
+    maxnpart = 1e8
+
+  [[particles.species]]
+    label    = "e-_sec"
+    mass     = 1.0
+    charge   = -1.0
+    maxnpart = 1e8
+
+  [[particles.species]]
+    label    = "e+_sec"
+    mass     = 1.0
+    charge   = 1.0
+    maxnpart = 1e8
+
+[setup]
+  temperature  = 0.0625
+  OpticalDepth = 1.0    ## optical depth over the box size (I use Lx)
+  photonEnergy = 0.01   ## energy of background photons in units of m_e c^2
+  switchToKN   = 0.1    ## particle switches from thomson to KN at gamma = switchToKN * gammaKN = switchToKN*(4*m_e c^2/photonEnergy)
+  gamma0       = 200.0  ## for the test problem, the lorentz factor of a beam
+  IsIC         = true   ## use Inverse Compton module? Photons are species 3
+  IsBW         = true  ## use gamma-gamma pair production?
+
+[output]
+  format        = "BPFile"
+  interval_time = 10.0
+
+  [output.fields]
+    quantities = ["N_1", "N_2", "Rho_1", "Rho_2", "B", "E", "V_1", "V_2", "Tij_1", "Tij_2"]
+
+  [output.particles]
+    enable = true
+    stride = 10
+
+  [output.spectra]
+    enable = true
+
+  [output.stats]
+    enable = false
+
+[diagnostics]
+  colored_stdout = false
+
+[checkpoint]
+  interval = 10000
