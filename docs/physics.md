@@ -91,8 +91,11 @@ These are open research questions, not bugs to silently "fix" — flag any chang
   covers species 0/1, so secondaries accumulate energy without cooling.
 - BW angular rejection loop runs up to 10,000 iterations per photon — can become a bottleneck
   as the photon population grows.
-- Whether a `(1 − cosθ)` lab-frame factor belongs in the BW cross-section is unresolved
-  (currently omitted).
+- ~~Whether a `(1 − cosθ)` lab-frame factor belongs in the BW cross-section is unresolved
+  (currently omitted).~~ **Resolved 2026-07-07**: the factor *is* present
+  (`pgens/pp/pgen.hpp:382`, `BWfullCS(s, mu) * (1.0 - mu)`), and the `bw_aharonian`
+  validation run (see Run log) reproduces the Aharonian+ 1983 isotropic pair spectrum to
+  ~1% with it — the factor is correct as implemented.
 - Scattered photon direction is approximated along the parent particle's β̂ (not deflected by
   scattering angle).
 - **pp only** (found 2026-07-07, job 8915373): the pp `InitPrtls` photon loop never sets
@@ -142,6 +145,18 @@ energetics, spectra, density maps, field maps. Safe to run mid-job (skips mid-wr
 
 ### Run log
 
+- 2026-07-07, job 8916768 (`bw_aharonian`, 512², runtime 250, completed in 20 s, 1×L40S):
+  **BW module validated against Aharonian+ 1983.** Pure-BW test (IC off) with bath
+  `photonEnergy = 0.1` and injected `epsilon1 = 100` (the Entity-docs two-photon figure;
+  its ε₁/ε₂ map to photonEnergy/epsilon1 — the COM transform assumes the injected photon
+  is the hard one, so the assignment can't be swapped). 13.6% of 4.19e6 photons converted;
+  both secondary species' f(γ), built from raw `pU` (weights zero as usual for pp), match
+  the AAN83 analytic spectrum to **median 1% per bin over 54 bins**, and observed γ ranges
+  [2.68, 97.42] hit the kinematic bounds [2.663, 97.437]. The `(1−cosθ)` flux factor at
+  `pgen.hpp:382` is therefore *correct as implemented* for this observable — the "currently
+  omitted" wording in the known issue above is stale (the factor is present and validated).
+  Script: `analysis/scripts/bw_aharonian_spectrum.py`; figure + overview in
+  `radiative/pp/analysis/plots/bw_aharonian/`.
 - 2026-07-07, job 8915652 (`testPP`, 2560², runtime 1000, completed in 7:27): overview
   in `radiative/pp/analysis/plots/testPP/`. Photons stay monoenergetic at ε₁=200 and
   deplete ~12% via BW (5.24e7 → 4.61e7 stride-corrected); secondaries grow to 6.3e6
