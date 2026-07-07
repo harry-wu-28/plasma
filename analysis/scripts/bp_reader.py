@@ -16,7 +16,7 @@ Layout facts, verified 2026-07-07 against runs pp/pp and pp/testPP:
   arrays: no global shape, one block per writer rank, and ranks other than
   0 may write zero-count blocks. Read block-wise, skip Count==0, sum.
 - The pp pgen leaves particle weights at 0 (see
-  radiative/pp/analysis/zero-weight-photon-injection-report.md), so all
+  analysis/reports/zero-weight-photon-injection-report.md), so all
   sN_<s> are identically zero for pp runs; build spectra from raw
   particle momenta instead.
 

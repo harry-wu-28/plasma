@@ -4,8 +4,8 @@
 Usage:
   conda run -n analysis python overview.py /dartfs-hpc/scratch/f007hd2/radiative/pp/testPP
 
-Produces, under <pp>/runs/<run_name>/plots/ when that run dir exists,
-else <this analysis dir>/plots/<run_name>/ (or --out):
+Produces, under radiative/pp/runs/<run_name>/plots/ when that run dir
+exists, else <this analysis dir>/plots/<run_name>/ (or --out):
   run_summary.txt       run configuration digest + data-health checks
   census.png            particle count per species vs time
   energetics.png        total energy and mean gamma per species vs time
@@ -353,9 +353,10 @@ def main():
     args = ap.parse_args()
 
     run = RunReader(args.run_dir)
-    # default output: the run's own plots/ dir under <pp>/runs/<run_name>/ if
+    # default output: the run's own plots/ dir under radiative/pp/runs/ if
     # that run dir exists; otherwise <analysis>/plots/<run_name> (e.g. pp_IC)
-    per_run = Path(__file__).resolve().parents[2] / "runs" / run.run_dir.name
+    per_run = (Path(__file__).resolve().parents[2] / "radiative" / "pp" /
+               "runs" / run.run_dir.name)
     out = Path(args.out) if args.out else (
         per_run / "plots" if per_run.is_dir()
         else Path(__file__).resolve().parents[1] / "plots" / run.run_dir.name)

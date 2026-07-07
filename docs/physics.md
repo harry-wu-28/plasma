@@ -103,7 +103,7 @@ These are open research questions, not bugs to silently "fix" — flag any chang
   weight 0 and all `[output.spectra]` output is identically zero (the spectra kernel bins
   `+= weight(p)` unconditionally). Dynamics and unweighted moments are unaffected; pp_IC is
   unaffected (its arch injector writes weight = 1). Evidence report with one-line proposed
-  fix: `radiative/pp/analysis/zero-weight-photon-injection-report.md`. Re-confirmed
+  fix: `analysis/reports/zero-weight-photon-injection-report.md`. Re-confirmed
   2026-07-07 on the testPP production run (job 8915652): `pW_3` sampled via `bpls` is
   identically zero at the final output step.
 
@@ -117,10 +117,11 @@ against the actual BP file before writing reader code. Every plot states its uni
 axis label. Write outputs to the run's own `radiative/pp/runs/<run_name>/plots/` when that
 run dir exists (pp per-run layout, 2026-07-07), else `analysis/plots/<run_name>/` — always
 derived from the data path. Run-specific analysis scripts live in
-`radiative/pp/runs/<run_name>/analysis/`; the shared library stays in
-`radiative/pp/analysis/scripts/`.
+`radiative/pp/runs/<run_name>/analysis/`; the shared, run-agnostic library lives at the
+repo root in `analysis/scripts/` (moved 2026-07-07), with evidence reports in
+`analysis/reports/`.
 
-**Overview tooling** (added 2026-07-07): `radiative/pp/analysis/scripts/` has
+**Overview tooling** (added 2026-07-07): `analysis/scripts/` has
 `bp_reader.py` (RunReader library), `viz_style.py` (shared palette/style), and
 `overview.py` — run `conda run -n analysis python overview.py <run_dir>` against any
 run dir on scratch (pp or pp_IC) for a full digest: summary + health checks, census,

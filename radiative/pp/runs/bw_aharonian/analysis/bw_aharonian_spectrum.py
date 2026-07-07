@@ -57,9 +57,9 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-# shared analysis library lives at <pp>/analysis/scripts (this file is at
-# <pp>/runs/<run>/analysis/)
-sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "analysis" / "scripts"))
+# shared analysis library lives at <repo root>/analysis/scripts (this file
+# is at <root>/radiative/pp/runs/<run>/analysis/)
+sys.path.insert(0, str(Path(__file__).resolve().parents[5] / "analysis" / "scripts"))
 from bp_reader import RunReader
 import viz_style as vs
 
