@@ -199,8 +199,8 @@ def main():
     ax.set_xscale("log")
     ax.set_yscale("log")
     ax.set_xlim(edges[0], edges[-1])
-    ax.set_xlabel(r"pair Lorentz factor $\gamma$ (dimensionless)")
-    ax.set_ylabel(r"$f(\gamma) = dN/d\gamma$ (pairs per unit $\gamma$)")
+    ax.set_xlabel(r"pair Lorentz factor $\gamma$")
+    ax.set_ylabel(r"$f(\gamma) = dN/d\gamma$")
     ax.set_title(
         "BW pair spectrum vs Aharonian+ 1983 analytics\n"
         rf"$\varepsilon_1={eps_soft}$, $\varepsilon_2={eps_hard:g}\ m_ec^2$ — "
