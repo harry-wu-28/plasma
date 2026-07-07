@@ -1,0 +1,123 @@
+# Breit-Wheeler validation: recreate the Entity docs figure comparing the pair
+# spectrum f(gamma) against the analytic model of Aharonian+ 1983 for two
+# isotropic monoenergetic photon populations:
+#
+#   figure epsilon_1 = 0.1   m_e c^2  ->  setup.photonEnergy (implicit isotropic bath the
+#                                         BW module samples partners from)
+#   figure epsilon_2 = 100   m_e c^2  ->  setup.epsilon1     (explicitly injected species-3
+#                                         photons, ppc0 per cell at t=0)
+#
+# NOTE the naming collision: the pgen's `epsilon1` is the figure's epsilon_2 (the hard
+# population). The COM transform in the BW kernel assumes energy >> enBath, so the hard
+# population must be the injected one and the soft one the bath.
+#
+# Kinematics: s = 2*eps1*eps2*(1-mu) in (0, 40]; threshold s >= 4 needs mu <= 0.8.
+# Pair Lorentz factors bounded by gamma_-/+ = (E/2)(1 -/+ beta_CM*beta'), E = 100.1:
+# gamma_min ~ 2.7, gamma_max ~ 97.4 (the dashed lines in the figure).
+#
+# Pure BW test: IC off, fieldsolver off. Pair spectrum is stationary in time (secondaries
+# don't cool), so runtime only sets statistics; ~250 gives O(10%) photon conversion
+# (~6e5 pairs per species from 512^2 x 16 = 4.2e6 injected photons).
+
+[simulation]
+  name    = "bw_aharonian"
+  engine  = "srpic"
+  runtime = 250.0
+
+[grid]
+  resolution = [512, 512]
+  extent     = [[-128.0, 128.0], [-128.0, 128.0]] # dx = 0.5, same as production pp runs
+
+  [grid.metric]
+    metric = "minkowski"
+
+  [grid.boundaries]
+    fields    = [["PERIODIC"], ["PERIODIC"]]
+    particles = [["PERIODIC"], ["PERIODIC"]]
+
+[scales]
+  larmor0    = 1.0
+  skindepth0 = 1.0
+
+[algorithms]
+  current_filters = 8
+
+  [algorithms.timestep]
+    CFL = 0.5
+
+  [algorithms.fieldsolver]
+    enable = false
+
+[particles]
+  ppc0 = 16.0 # 512^2 * 16 = 4.2e6 injected photons
+
+  [[particles.species]]
+    label    = "e-_p"
+    mass     = 1.0
+    charge   = -1.0
+    maxnpart = 1e5 # stays empty (pp injects only photons; IC off)
+
+  [[particles.species]]
+    label    = "e+_p"
+    mass     = 1.0
+    charge   = 1.0
+    maxnpart = 1e5 # stays empty
+
+  [[particles.species]]
+    label    = "phot"
+    mass     = 0.0
+    charge   = 0.0
+    maxnpart = 1e7
+
+  [[particles.species]]
+    label    = "e-_sec"
+    mass     = 1.0
+    charge   = -1.0
+    maxnpart = 5e6
+
+  [[particles.species]]
+    label    = "e+_sec"
+    mass     = 1.0
+    charge   = 1.0
+    maxnpart = 5e6
+
+[setup]
+  temperature  = 0.0625 # unused here, required by pgen constructor
+  OpticalDepth = 1.0    # Thomson depth of the bath across Lx; sets the null-collision rate
+  photonEnergy = 0.1    # <-- figure's epsilon_1: soft isotropic monoenergetic bath [m_e c^2]
+  switchToKN   = 0.1    # irrelevant (IC off)
+  gamma0       = 200.0  # unused here, required by pgen constructor
+  epsilon1     = 100.0  # <-- figure's epsilon_2: injected species-3 photons [m_e c^2]
+  IsIC = false          # pure BW test: no inverse Compton
+  IsBW = true
+
+[output]
+  format        = "BPFile"
+  interval_time = 25.0
+
+  [output.fields]
+    # species 1/2 are empty and fields are zero (fieldsolver off) -> output moments of 3/4/5
+    quantities = ["N_3", "N_4", "N_5", "Rho_4", "Rho_5"]
+
+  [output.particles]
+    enable  = true
+    species = [3, 4, 5]
+    stride  = 1 # full particle dump: pair spectrum must be built from pU1..3_4/5
+                # (built-in spectra are identically zero for pp: zero-weight injection bug,
+                # see radiative/pp/analysis/zero-weight-photon-injection-report.md)
+
+  [output.spectra]
+    enable   = true # zero until the weight fix is applied; bins set to bracket the pairs
+    e_min    = 1.0
+    e_max    = 200.0
+    n_bins   = 100
+    log_bins = true
+
+  [output.stats]
+    enable = false
+
+[diagnostics]
+  colored_stdout = false
+
+[checkpoint]
+  interval = 10000
