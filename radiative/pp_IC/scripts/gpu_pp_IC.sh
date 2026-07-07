@@ -2,7 +2,7 @@
 #SBATCH --partition=gpuq
 #SBATCH --job-name=rad-gpu
 #SBATCH --nodes=1
-#SBATCH --gres=gpu:2
+#SBATCH --gres=gpu:l40s:2
 #SBATCH --ntasks-per-node=2
 #SBATCH --cpus-per-task=4
 #SBATCH --time=0:20:00
@@ -24,27 +24,12 @@ module load cuda/12
 export PATH=/usr/lib64/openmpi/bin:$PATH
 export LD_LIBRARY_PATH=/usr/lib64/openmpi/lib:${LD_LIBRARY_PATH:-}
 
-
 echo -e "\n=== Loaded Modules ==="
 module list
 
-# Environment
-export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
-export OMP_PROC_BIND=spread
-export OMP_PLACES=threads
-
 # Avoid OFI/UCX RDMA transports on this node; OFI fails on irdma1 with
 # "fi_endpoint: Invalid argument" / "Operation not permitted".
-export OMPI_MCA_pml="ob1"
-export OMPI_MCA_btl="self,vader,tcp"
-export OMPI_MCA_mtl="^ofi"
-export OMPI_MCA_osc="^ucx"
 export OMPI_MCA_orte_base_help_aggregate=0
-
-# Dependencies
-export Kokkos_ROOT=/dartfs-hpc/rc/home/5/f007gj5/kokkos/build
-export adios2_ROOT=/dartfs-hpc/rc/home/5/f007gj5/ADIOS2/build
-export HDF5_ROOT=/dartfs-hpc/rc/home/5/f007gj5/hdf5src/build/hdf5_install
 
 # Paths
 WORK_DIR=/dartfs-hpc/scratch/f007hd2/radiative/pp_IC
@@ -53,7 +38,8 @@ INPUT_FILE=$HOME/plasma/radiative/pp_IC/inputs/toml_pp_IC.toml
 
 # GPU info
 echo -e "\n=== GPU Information ==="
-nvidia-smi --query-gpu=name,memory.total,compute_cap --format=csv
+nvidia-smi --query-gpu=index,name,memory.total,memory.free,memory.used --format=csv
+nvidia-smi --query-compute-apps=gpu_uuid,pid,process_name,used_gpu_memory --format=csv
 
 # Change to work directory
 mkdir -p $WORK_DIR
@@ -68,6 +54,7 @@ mpirun -np $SLURM_NTASKS \
   --mca btl self,tcp \
   --mca mtl ^ofi \
   --mca osc ^ucx \
+  $HOME/plasma/radiative/pp_IC/scripts/bind_gpu.sh \
   $ENTITY_BIN -input $INPUT_FILE
 EXIT_CODE=$?
 END_TIME=$(date +%s)

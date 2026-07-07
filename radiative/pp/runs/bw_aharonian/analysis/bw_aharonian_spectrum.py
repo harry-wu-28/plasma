@@ -186,11 +186,10 @@ def main():
         stats[s] = (n, gam.min(), gam.max(), np.median(rel), well.sum())
 
     n_ref = stats[4][0]
-    ax.plot(dense, shape * n_ref / shape_int, color=vs.INK, linewidth=1.4,
-            label="AAN83 exact, eqs. (19)-(21)", zorder=1)
-    ax.plot(dense, shape25 * n_ref / shape25_int, color=vs.MUTED,
-            linewidth=1.2, linestyle=":",
-            label=r"AAN83 asymptotic, eq. (25) ($\omega_1\ll 1$)", zorder=1)
+    # plot only the asymptotic curve (the exact spectrum is still computed
+    # above and remains the reference for the printed deviation stats)
+    ax.plot(dense, shape25 * n_ref / shape25_int, color=vs.INK, linewidth=1.4,
+            label="AAN83 asymptotic, eq. (25)", zorder=1)
     for x, lab in ((g_lo, r"$\gamma_{\min}$"), (g_hi, r"$\gamma_{\max}$")):
         ax.axvline(x, color=vs.MUTED, linestyle="--", linewidth=1.0)
     ax.plot([], [], color=vs.MUTED, linestyle="--", linewidth=1.0,

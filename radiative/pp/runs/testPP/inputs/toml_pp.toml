@@ -1,5 +1,5 @@
 [simulation]
-  name    = "testPP"
+  name    = "pp"
   engine  = "srpic"
   runtime = 1000.0
 
