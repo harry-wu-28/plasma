@@ -151,8 +151,11 @@ energetics, spectra, density maps, field maps. Safe to run mid-job (skips mid-wr
   its ε₁/ε₂ map to photonEnergy/epsilon1 — the COM transform assumes the injected photon
   is the hard one, so the assignment can't be swapped). 13.6% of 4.19e6 photons converted;
   both secondary species' f(γ), built from raw `pU` (weights zero as usual for pp), match
-  the AAN83 analytic spectrum to **median 1% per bin over 54 bins**, and observed γ ranges
-  [2.68, 97.42] hit the kinematic bounds [2.663, 97.437]. The `(1−cosθ)` flux factor at
+  the **exact** AAN83 spectrum (Agaronyan/Aharonian, Atoyan & Nagapetyan 1983, Astrophysics
+  19, 187, doi:10.1007/BF01005624, eqs. 19–21 integrated numerically; our case is the
+  paper's Fig. 1b curve 2) to **median 1.0%/0.8% per bin over 54 bins**; the ω₁≪1
+  asymptotic eq. (25) agrees except near γ_min where its support starts at 2.57 instead of
+  the exact 2.663. Observed γ ranges [2.68, 97.42] hit the eq.-(22) bounds [2.663, 97.437]. The `(1−cosθ)` flux factor at
   `pgen.hpp:382` is therefore *correct as implemented* for this observable — the "currently
   omitted" wording in the known issue above is stale (the factor is present and validated).
   Script: `analysis/scripts/bw_aharonian_spectrum.py`; figure + overview in
