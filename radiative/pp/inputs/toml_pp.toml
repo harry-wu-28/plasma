@@ -1,11 +1,11 @@
 [simulation]
-  name    = "pp"
+  name    = "testPP"
   engine  = "srpic"
-  runtime = 100.0
+  runtime = 1000.0
 
 [grid]
-  resolution = [512, 512]
-  extent     = [[-128.0, 128.0], [-128.0, 128.0]]
+  resolution = [2560, 2560]
+  extent     = [[-640.0, 640.0], [-640.0, 640.0]]
 
   [grid.metric]
     metric = "minkowski"
@@ -34,58 +34,44 @@
     label    = "e-_p"
     mass     = 1.0
     charge   = -1.0
-    maxnpart = 8e7
+    maxnpart = 1e8
 
   [[particles.species]]
     label    = "e+_p"
     mass     = 1.0
     charge   = 1.0
-    maxnpart = 8e7
+    maxnpart = 1e8
 
   [[particles.species]]
     label    = "phot"
     mass     = 0.0
     charge   = 0.0
-    maxnpart = 8e7
+    maxnpart = 1e8
 
   [[particles.species]]
     label    = "e-_sec"
     mass     = 1.0
     charge   = -1.0
-    maxnpart = 8e7
+    maxnpart = 1e8
 
   [[particles.species]]
     label    = "e+_sec"
     mass     = 1.0
     charge   = 1.0
-    maxnpart = 8e7
+    maxnpart = 1e8
 
 [setup]
-  ## pgen: setup.temperature — Maxwellian temperature for species 1 (e-_p), in units of m_e c^2
-  temperature  = 0.0625
-  ## pgen: setup.temperature2 — Maxwellian temperature for species 2 (e+_p); defaults to temperature if omitted
-  # temperature2 =
-  ## pgen: setup.OpticalDepth — Thomson optical depth across box length Lx; sets IC/BW interaction rate per step
-  OpticalDepth = 1.0
-  ## pgen: setup.photonEnergy — background soft-photon bath energy in units of m_e c^2
-  ##        sets gammaKN = 1/(4*photonEnergy) and gammaSwitch = switchToKN * gammaKN
-  photonEnergy = 0.01
-  ## pgen: setup.switchToKN — fraction of gammaKN at which IC switches from continuous Thomson to discrete KN MC
-  ##        default: 0.1
-  switchToKN   = 0.1
-  ## pgen: setup.gamma0 — initial Lorentz factor of the injected beam (species 1 and 2)
-  gamma0       = 200.0
-  ## pgen: setup.epsilon1 — energy of initially injected photons (species 3) in units of m_e c^2
-  ##        photons are injected isotropically with |u| = epsilon1 at t=0
-  ##        epsilon1 * photonEnergy = 2.0 >= 1 -> above BW pair-production threshold
-  epsilon1     = 200.0
-  ## pgen: setup.IsIC — enable Inverse Compton module (acts on species 1 and 2, emits into species 3)
-  IsIC         = true
-  ## pgen: setup.IsBW — enable Breit-Wheeler pair production (acts on species 3, injects into species 4 and 5)
-  IsBW         = true
+  temperature = 0.0625
+  OpticalDepth = 1.0 ## optical depth over the box size (I use Lx)
+  photonEnergy = 0.01## energy of background photons in units of m_e c^2
+  switchToKN = 0.1 ## particle switches from thompshon to KN at gamma = switchToKN * gammaKN= switchToKN (4*m_e c^2/photonEnergy)
+  gamma0 = 200.0 ## for the test problem, the lorentz factor of a beam
+  IsIC = true ## use Inverse Compton module? Photons are species 3
+  IsBW = true ## use gamma-gamma pair production?
+  ## for test purposes, QED-created pairs are added into species 4 and 5
 
 [output]
-  format        = "BPFile"
+  format        = "hdf5"
   interval_time = 10.0
 
   [output.fields]
@@ -97,6 +83,7 @@
 
   [output.spectra]
     enable = true
+
 
   [output.stats]
     enable = false
