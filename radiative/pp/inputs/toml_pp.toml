@@ -66,12 +66,15 @@
   photonEnergy = 0.01## energy of background photons in units of m_e c^2
   switchToKN = 0.1 ## particle switches from thompshon to KN at gamma = switchToKN * gammaKN= switchToKN (4*m_e c^2/photonEnergy)
   gamma0 = 200.0 ## for the test problem, the lorentz factor of a beam
+  epsilon1 = 200.0 ## energy of initially injected photons (species 3) in m_e c^2; required by pp pgen (no default)
+  ## epsilon1 * photonEnergy = 2.0 -> above BW pair-production threshold (same value as prior validation run)
   IsIC = true ## use Inverse Compton module? Photons are species 3
   IsBW = true ## use gamma-gamma pair production?
   ## for test purposes, QED-created pairs are added into species 4 and 5
 
 [output]
-  format        = "hdf5"
+
+  format        = "BPFile"
   interval_time = 10.0
 
   [output.fields]

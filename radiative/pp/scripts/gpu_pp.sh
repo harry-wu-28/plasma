@@ -5,8 +5,8 @@
 #SBATCH --gres=gpu:l40s:2
 #SBATCH --ntasks-per-node=2
 #SBATCH --cpus-per-task=4
-#SBATCH --time=0:20:00
-#SBATCH --mem=10G
+#SBATCH --time=4:00:00
+#SBATCH --mem=16G
 #SBATCH --output=../logs/gpu_%j.out
 #SBATCH --error=../logs/gpu_%j.err
 
