@@ -57,13 +57,16 @@ and dependencies each build dir uses.
 ./entity.xc -input <path/to/input.toml> -restart
 ```
 
-On the cluster, submit via SLURM (from the run dir's `scripts/`):
+On the cluster, submit via SLURM (from the run's own `scripts/` dir, so the `../logs/`
+SBATCH output path resolves; pp uses a per-run layout since 2026-07-07):
 
-- `radiative/pp/scripts/gpu_pp.sh` — pp run
-- `radiative/pp_IC/scripts/gpu_pp_IC.sh` — pp_IC run
+- `radiative/pp/runs/testPP/scripts/gpu_pp.sh` — pp production run (2 L40S, 2 ranks)
+- `radiative/pp/runs/bw_aharonian/scripts/gpu_pp_bw.sh` — BW validation run (1 L40S, 1 rank)
+- `radiative/pp_IC/scripts/gpu_pp_IC.sh` — pp_IC run (2 L40S, 2 ranks)
 
-Both request `--partition=gpuq --gres=gpu:l40s:2 --ntasks-per-node=2` and wrap the binary in
-`scripts/bind_gpu.sh`, which maps each MPI local rank to its own GPU via `CUDA_VISIBLE_DEVICES`.
+All request `--partition=gpuq` and wrap the binary in the shared
+`radiative/pp/scripts/bind_gpu.sh` (pp_IC has its own copy), which maps each MPI local rank
+to its own GPU via `CUDA_VISIBLE_DEVICES`.
 
 ### The OpenMPI/PMIx landmine
 
@@ -93,7 +96,7 @@ scratch layout and SLURM discipline.
 
 See `radiative/entity/input.example.toml` for the full annotated schema. Active inputs:
 
-- `radiative/pp/inputs/toml_pp.toml` — testPP production input (2560×2560, `runtime = 1000`,
+- `radiative/pp/runs/testPP/inputs/toml_pp.toml` — testPP production input (2560×2560, `runtime = 1000`,
   `epsilon1 = 200`, `simulation.name = "testPP"`). Ran to completion in 447 s on 2 L40S
   (job 8915652, 2026-07-07): 5644 steps, 81 GB in scratch, 100 output steps each of
   fields/particles/spectra; final census 4.6e7 photons, 6.3e6 + 6.3e6 BW secondary pairs,
@@ -104,6 +107,10 @@ See `radiative/entity/input.example.toml` for the full annotated schema. Active 
   field data (trim the list or add `N_3`/`N_4`/`N_5` variants); and photon weights are zero
   (known pp pgen issue, see [physics.md](physics.md)), so all `[output.spectra]` output is
   identically zero.
+- `radiative/pp/runs/bw_aharonian/inputs/toml_pp_bw_aharonian.toml` — BW validation vs
+  Aharonian+ 1983 (512×512, `runtime = 250`, `epsilon1 = 100`, `photonEnergy = 0.1`,
+  IC off, full particle dumps). Job 8916768 completed in 20 s on 1 L40S; see the run log
+  in [physics.md](physics.md).
 - `radiative/pp_IC/inputs/toml_pp_IC.toml` — filled-in pp_IC run (512×512, 5 species,
   `runtime = 1000`, BPFile output)
 

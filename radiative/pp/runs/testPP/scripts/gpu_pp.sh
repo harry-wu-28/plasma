@@ -1,19 +1,16 @@
 #!/bin/bash
 #SBATCH --partition=gpuq
-#SBATCH --job-name=bw-aharonian
+#SBATCH --job-name=rad-gpu
 #SBATCH --nodes=1
-#SBATCH --gres=gpu:l40s:1
-#SBATCH --ntasks-per-node=1
+#SBATCH --gres=gpu:l40s:2
+#SBATCH --ntasks-per-node=2
 #SBATCH --cpus-per-task=4
-#SBATCH --time=1:00:00
+#SBATCH --time=4:00:00
 #SBATCH --mem=16G
 #SBATCH --output=../logs/gpu_%j.out
 #SBATCH --error=../logs/gpu_%j.err
 
-# Breit-Wheeler validation run (Aharonian+ 1983 pair spectrum), single GPU:
-# 512^2 box, ~4.2e6 photons — small compared to production pp runs.
-
-echo "=== GPU BW-Aharonian Validation ==="
+echo "=== GPU PP Simulation ==="
 echo "Start: $(date)"
 echo "Node: $(hostname)"
 
@@ -34,10 +31,10 @@ module list
 # "fi_endpoint: Invalid argument" / "Operation not permitted".
 export OMPI_MCA_orte_base_help_aggregate=0
 
-# Paths (Entity writes output into <WORK_DIR>/<simulation.name>/)
+# Paths
 WORK_DIR=/dartfs-hpc/scratch/f007hd2/radiative/pp
 ENTITY_BIN=$HOME/plasma/radiative/pp/entity.xc
-INPUT_FILE=$HOME/plasma/radiative/pp/inputs/toml_pp_bw_aharonian.toml
+INPUT_FILE=$HOME/plasma/radiative/pp/runs/testPP/inputs/toml_pp.toml
 
 # GPU info
 echo -e "\n=== GPU Information ==="

@@ -114,7 +114,11 @@ Data is ADIOS2 BP5 (`format = "BPFile"`). Python analysis runs via
 numpy + matplotlib (verified 2026-07-07; `anaconda3` has **no** adios2, and no `bpls` was
 found on PATH or under dependencies — probe files from Python). Confirm variable names
 against the actual BP file before writing reader code. Every plot states its units in the
-axis label. Write outputs to `analysis/plots/<run_name>/`, derived from the data path.
+axis label. Write outputs to the run's own `radiative/pp/runs/<run_name>/plots/` when that
+run dir exists (pp per-run layout, 2026-07-07), else `analysis/plots/<run_name>/` — always
+derived from the data path. Run-specific analysis scripts live in
+`radiative/pp/runs/<run_name>/analysis/`; the shared library stays in
+`radiative/pp/analysis/scripts/`.
 
 **Overview tooling** (added 2026-07-07): `radiative/pp/analysis/scripts/` has
 `bp_reader.py` (RunReader library), `viz_style.py` (shared palette/style), and
@@ -158,10 +162,11 @@ energetics, spectra, density maps, field maps. Safe to run mid-job (skips mid-wr
   the exact 2.663. Observed γ ranges [2.68, 97.42] hit the eq.-(22) bounds [2.663, 97.437]. The `(1−cosθ)` flux factor at
   `pgen.hpp:382` is therefore *correct as implemented* for this observable — the "currently
   omitted" wording in the known issue above is stale (the factor is present and validated).
-  Script: `analysis/scripts/bw_aharonian_spectrum.py`; figure + overview in
-  `radiative/pp/analysis/plots/bw_aharonian/`.
+  Script: `radiative/pp/runs/bw_aharonian/analysis/bw_aharonian_spectrum.py`; figure +
+  overview in `radiative/pp/runs/bw_aharonian/plots/`.
 - 2026-07-07, job 8915652 (`testPP`, 2560², runtime 1000, completed in 7:27): overview
-  in `radiative/pp/analysis/plots/testPP/`. Photons stay monoenergetic at ε₁=200 and
+  plots were under `analysis/plots/testPP/` (dir no longer present — regenerate with
+  `overview.py`, which now writes to `runs/testPP/plots/`). Photons stay monoenergetic at ε₁=200 and
   deplete ~12% via BW (5.24e7 → 4.61e7 stride-corrected); secondaries grow to 6.3e6
   each with spectrum spanning γ ≈ 25–170 peaked near 130; ⟨γ⟩ of secondaries stays flat
   at ≈100 for the whole run — direct evidence of the "secondaries not fed back into IC"

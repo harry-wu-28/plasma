@@ -57,7 +57,9 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+# shared analysis library lives at <pp>/analysis/scripts (this file is at
+# <pp>/runs/<run>/analysis/)
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "analysis" / "scripts"))
 from bp_reader import RunReader
 import viz_style as vs
 
@@ -205,7 +207,7 @@ def main():
         rf"run {run.run_dir.name}, $t={time:.0f}$")
     ax.legend(loc="lower center")
 
-    out_dir = Path(__file__).resolve().parents[1] / "plots" / run.run_dir.name
+    out_dir = Path(__file__).resolve().parents[2] / run.run_dir.name / "plots"
     out_dir.mkdir(parents=True, exist_ok=True)
     out = out_dir / f"pair_spectrum_vs_aan83_step{step:08d}.png"
     fig.tight_layout()

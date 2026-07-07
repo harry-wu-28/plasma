@@ -4,7 +4,8 @@
 Usage:
   conda run -n analysis python overview.py /dartfs-hpc/scratch/f007hd2/radiative/pp/testPP
 
-Produces, under <this analysis dir>/plots/<run_name>/ (or --out):
+Produces, under <pp>/runs/<run_name>/plots/ when that run dir exists,
+else <this analysis dir>/plots/<run_name>/ (or --out):
   run_summary.txt       run configuration digest + data-health checks
   census.png            particle count per species vs time
   energetics.png        total energy and mean gamma per species vs time
@@ -341,7 +342,9 @@ def write_summary(run, out, info):
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("run_dir", help="Entity run dir on scratch (contains fields/ particles/ spectra/)")
-    ap.add_argument("--out", default=None, help="output dir (default: <analysis>/plots/<run_name>)")
+    ap.add_argument("--out", default=None,
+                    help="output dir (default: runs/<run_name>/plots if that "
+                         "run dir exists, else <analysis>/plots/<run_name>)")
     ap.add_argument("--epochs", type=int, default=4, help="number of times for spectra (default 4)")
     ap.add_argument("--every", type=int, default=1, help="use every Nth step for time series")
     ap.add_argument("--map-bins", type=int, default=256, help="density-map resolution")
@@ -350,8 +353,12 @@ def main():
     args = ap.parse_args()
 
     run = RunReader(args.run_dir)
-    out = Path(args.out) if args.out else \
-        Path(__file__).resolve().parents[1] / "plots" / run.run_dir.name
+    # default output: the run's own plots/ dir under <pp>/runs/<run_name>/ if
+    # that run dir exists; otherwise <analysis>/plots/<run_name> (e.g. pp_IC)
+    per_run = Path(__file__).resolve().parents[2] / "runs" / run.run_dir.name
+    out = Path(args.out) if args.out else (
+        per_run / "plots" if per_run.is_dir()
+        else Path(__file__).resolve().parents[1] / "plots" / run.run_dir.name)
     out.mkdir(parents=True, exist_ok=True)
     vs.apply_style()
     log(f"run: {run.run_dir}  ->  {out}")
