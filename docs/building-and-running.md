@@ -93,11 +93,17 @@ scratch layout and SLURM discipline.
 
 See `radiative/entity/input.example.toml` for the full annotated schema. Active inputs:
 
-- `radiative/pp/inputs/toml_pp.toml` — filled pp validation input (512×512, `runtime = 100`,
-  `epsilon1 = 200`, otherwise mirrors the pp_IC parameters; each `setup.*` key documented
-  inline). Ran clean in 14 s on 2 L40S (job 8915373, 2026-07-07) — scale `runtime` up for
-  science runs. Note the `[output.fields]` quantities list only covers species 1/2, which are
-  empty in the pp regime; add `N_3`/`N_4`/`N_5` variants for useful field output.
+- `radiative/pp/inputs/toml_pp.toml` — testPP production input (2560×2560, `runtime = 1000`,
+  `epsilon1 = 200`, `simulation.name = "testPP"`). Ran to completion in 447 s on 2 L40S
+  (job 8915652, 2026-07-07): 5644 steps, 81 GB in scratch, 100 output steps each of
+  fields/particles/spectra; final census 4.6e7 photons, 6.3e6 + 6.3e6 BW secondary pairs,
+  species 1/2 empty as expected. Its 512×512 `runtime = 100` predecessor (job 8915373) ran
+  in 14 s — the small run was latency-bound, so cost scales far sublinearly with problem
+  size. Two caveats for analysis/future runs: the `[output.fields]` quantities list only
+  covers species 1/2, which stay empty in the pp regime, so most of the 81 GB is zero-valued
+  field data (trim the list or add `N_3`/`N_4`/`N_5` variants); and photon weights are zero
+  (known pp pgen issue, see [physics.md](physics.md)), so all `[output.spectra]` output is
+  identically zero.
 - `radiative/pp_IC/inputs/toml_pp_IC.toml` — filled-in pp_IC run (512×512, 5 species,
   `runtime = 1000`, BPFile output)
 

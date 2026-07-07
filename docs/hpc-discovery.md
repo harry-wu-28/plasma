@@ -27,7 +27,8 @@ from the TOML:
 
 ```
 /dartfs-hpc/scratch/f007hd2/radiative/
-  pp/                    # WORK_DIR for pp runs (first completed run 2026-07-07, job 8915373, 335 MB)
+  pp/                    # WORK_DIR for pp runs: pp/ validation run (job 8915373, 335 MB)
+                         #   and testPP/ production run (job 8915652, 81 GB), both 2026-07-07
   pp_IC/                 # WORK_DIR for pp_IC runs
     pp_IC/               # named after simulation.name
       pp_IC.info         #   resolved build + full config dump (versions, flags, memory footprint)
@@ -45,8 +46,11 @@ The BP5 subdirectory names and file patterns come from `src/output/writer.cpp`
 (`<mode>/<mode>.%08lu.bp`) and `src/output/checkpoint.cpp` (`step-%08lu.bp`).
 
 Diagnosing a failed run: `<name>.log` (last logger checkpoint reached) and `<name>.err` first,
-then the SLURM logs in the repo run dir's `logs/`. State as surveyed 2026-07-07: pp has one
-completed validation run (job 8915373, full BP5 tree, all 10 output steps readable via `bpls`).
+then the SLURM logs in the repo run dir's `logs/`. State as surveyed 2026-07-07: pp has a
+completed 512² validation run (job 8915373, full BP5 tree, all 10 output steps readable via
+`bpls`) and a completed 2560² production run `testPP/` (job 8915652, 447 s, 81 GB, all 100
+output steps written and readable; spectra identically zero due to the pp photon-weight
+issue — see [physics.md](physics.md)).
 The 2026-06-04 pp_IC failure is now diagnosed: it hung at the first `CommunicateFields`
 because the build had `gpu_aware_mpi=ON` while the runtime OpenMPI is not CUDA-aware
 (`btl_tcp writev ... Bad address` in `logs/gpu_8754355.err`), then hit the time limit — see

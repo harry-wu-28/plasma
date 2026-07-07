@@ -100,7 +100,9 @@ These are open research questions, not bugs to silently "fix" — flag any chang
   weight 0 and all `[output.spectra]` output is identically zero (the spectra kernel bins
   `+= weight(p)` unconditionally). Dynamics and unweighted moments are unaffected; pp_IC is
   unaffected (its arch injector writes weight = 1). Evidence report with one-line proposed
-  fix: `radiative/pp/analysis/zero-weight-photon-injection-report.md`.
+  fix: `radiative/pp/analysis/zero-weight-photon-injection-report.md`. Re-confirmed
+  2026-07-07 on the testPP production run (job 8915652): `pW_3` sampled via `bpls` is
+  identically zero at the final output step.
 
 ## Analysis conventions
 
