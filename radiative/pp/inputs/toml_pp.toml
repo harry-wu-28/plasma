@@ -1,11 +1,11 @@
 [simulation]
-  name    = ""
+  name    = "pp"
   engine  = "srpic"
-  runtime =
+  runtime = 100.0
 
 [grid]
-  resolution = [, ]
-  extent     = [[, ], [, ]]
+  resolution = [512, 512]
+  extent     = [[-128.0, 128.0], [-128.0, 128.0]]
 
   [grid.metric]
     metric = "minkowski"
@@ -19,7 +19,7 @@
   skindepth0 = 1.0
 
 [algorithms]
-  current_filters =
+  current_filters = 8
 
   [algorithms.timestep]
     CFL = 0.5
@@ -28,71 +28,72 @@
     enable = false
 
 [particles]
-  ppc0 =
+  ppc0 = 8.0
 
   [[particles.species]]
     label    = "e-_p"
     mass     = 1.0
     charge   = -1.0
-    maxnpart =
+    maxnpart = 8e7
 
   [[particles.species]]
     label    = "e+_p"
     mass     = 1.0
     charge   = 1.0
-    maxnpart =
+    maxnpart = 8e7
 
   [[particles.species]]
     label    = "phot"
     mass     = 0.0
     charge   = 0.0
-    maxnpart =
+    maxnpart = 8e7
 
   [[particles.species]]
     label    = "e-_sec"
     mass     = 1.0
     charge   = -1.0
-    maxnpart =
+    maxnpart = 8e7
 
   [[particles.species]]
     label    = "e+_sec"
     mass     = 1.0
     charge   = 1.0
-    maxnpart =
+    maxnpart = 8e7
 
 [setup]
   ## pgen: setup.temperature — Maxwellian temperature for species 1 (e-_p), in units of m_e c^2
-  temperature  =
+  temperature  = 0.0625
   ## pgen: setup.temperature2 — Maxwellian temperature for species 2 (e+_p); defaults to temperature if omitted
   # temperature2 =
   ## pgen: setup.OpticalDepth — Thomson optical depth across box length Lx; sets IC/BW interaction rate per step
-  OpticalDepth =
+  OpticalDepth = 1.0
   ## pgen: setup.photonEnergy — background soft-photon bath energy in units of m_e c^2
   ##        sets gammaKN = 1/(4*photonEnergy) and gammaSwitch = switchToKN * gammaKN
-  photonEnergy =
+  photonEnergy = 0.01
   ## pgen: setup.switchToKN — fraction of gammaKN at which IC switches from continuous Thomson to discrete KN MC
   ##        default: 0.1
   switchToKN   = 0.1
   ## pgen: setup.gamma0 — initial Lorentz factor of the injected beam (species 1 and 2)
-  gamma0       =
+  gamma0       = 200.0
   ## pgen: setup.epsilon1 — energy of initially injected photons (species 3) in units of m_e c^2
   ##        photons are injected isotropically with |u| = epsilon1 at t=0
-  epsilon1     =
+  ##        epsilon1 * photonEnergy = 2.0 >= 1 -> above BW pair-production threshold
+  epsilon1     = 200.0
   ## pgen: setup.IsIC — enable Inverse Compton module (acts on species 1 and 2, emits into species 3)
-  IsIC         =
+  IsIC         = true
   ## pgen: setup.IsBW — enable Breit-Wheeler pair production (acts on species 3, injects into species 4 and 5)
-  IsBW         =
+  IsBW         = true
 
 [output]
   format        = "BPFile"
-  interval_time =
+  interval_time = 10.0
 
   [output.fields]
     quantities = ["N_1", "N_2", "Rho_1", "Rho_2", "B", "E", "V_1", "V_2", "Tij_1", "Tij_2"]
 
   [output.particles]
     enable = true
-    stride =
+    stride = 10
 
   [output.spectra]
     enable = true
@@ -104,4 +105,4 @@
   colored_stdout = false
 
 [checkpoint]
-  interval =
+  interval = 10000
