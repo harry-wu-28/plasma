@@ -106,10 +106,45 @@ These are open research questions, not bugs to silently "fix" — flag any chang
 
 ## Analysis conventions
 
-`radiative/pp/analysis/` and `radiative/pp_IC/analysis/` each have `scripts/` and `plots/`
-directories (currently empty scaffolds). Data is ADIOS2 BP5 (`format = "BPFile"`). Field
-variables in BP files are prefixed with `f` (e.g. `fB1`, `fE2`); particle data uses `pX1_<s>`,
-`pU1_<s>`, `pW_<s>` with 1-based species index `<s>`. Python analysis runs via
-`conda run -n anaconda3 python <script>`. Confirm variable names against the actual BP file
-(`bpls` or a Python probe) before writing reader code. Every plot states its units in the axis
-label. Write outputs to `analysis/plots/<run_name>/`, derived from the data path.
+Data is ADIOS2 BP5 (`format = "BPFile"`). Python analysis runs via
+`conda run -n analysis python <script>` — the `analysis` conda env has adios2 2.11 +
+numpy + matplotlib (verified 2026-07-07; `anaconda3` has **no** adios2, and no `bpls` was
+found on PATH or under dependencies — probe files from Python). Confirm variable names
+against the actual BP file before writing reader code. Every plot states its units in the
+axis label. Write outputs to `analysis/plots/<run_name>/`, derived from the data path.
+
+**Overview tooling** (added 2026-07-07): `radiative/pp/analysis/scripts/` has
+`bp_reader.py` (RunReader library), `viz_style.py` (shared palette/style), and
+`overview.py` — run `conda run -n analysis python overview.py <run_dir>` against any
+run dir on scratch (pp or pp_IC) for a full digest: summary + health checks, census,
+energetics, spectra, density maps, field maps. Safe to run mid-job (skips mid-write steps).
+
+### BP file layout facts (verified 2026-07-07 on runs pp/pp and pp/testPP)
+
+- One BP5 dir per output step: `fields/fields.00000514.bp` etc. Every file carries
+  scalar `Step`/`Time` and the **full input config as attributes** (`setup.*`,
+  `grid.*`, `output.*` — no need to parse the TOML).
+- Fields: `X1`,`X2` centers, `X1e`,`X2e` edges; 2D arrays `fB1..3`, `fE1..3`,
+  `fN_<s>`, `fRho_<s>`, `fT11_<s>`.., `fV1_<s>`.. stored **[x2, x1]** (MPI
+  decomposition along X2 splits the first axis).
+- Particles: `pX1_<s>`, `pX2_<s>`, `pU1..3_<s>`, `pW_<s>`, subsampled by
+  `output.particles.stride` (10 in current runs) — multiply counts/sums by stride.
+- Spectra: `sEbn` (n_bins+1 edges), `sN_<s>` are ADIOS2 **local** arrays — one block
+  per writer rank, and non-root ranks may write zero-count blocks. Read block-wise,
+  skip `Count==0` (a plain `read()` on them NaN-crashes adios2 2.11 Python), sum blocks.
+- Zero-size variables (empty species) also crash plain `read()` — guard on global shape.
+- **pp runs only**: species 1/2 are empty by design (pp injects only photons), so the
+  `[output.fields]` quantities `N_1, N_2, Rho_1, Rho_2, V_1/2, Tij_1/2` are identically
+  zero, and with the fieldsolver disabled E/B are zero too — **all 28 field variables
+  carry no information**; the overview must be built from particle data. (Suggest
+  switching the quantities to species 3/4/5 for future pp inputs.) Built-in spectra are
+  also all zero for pp (zero-weight issue above).
+
+### Run log
+
+- 2026-07-07, job 8915652 (`testPP`, 2560², runtime 1000, completed in 7:27): overview
+  in `radiative/pp/analysis/plots/testPP/`. Photons stay monoenergetic at ε₁=200 and
+  deplete ~12% via BW (5.24e7 → 4.61e7 stride-corrected); secondaries grow to 6.3e6
+  each with spectrum spanning γ ≈ 25–170 peaked near 130; ⟨γ⟩ of secondaries stays flat
+  at ≈100 for the whole run — direct evidence of the "secondaries not fed back into IC"
+  known issue. Total energy conserved to the eye.
