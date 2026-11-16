@@ -1,0 +1,10 @@
+ppc4 1 twostream/runs/scan/inputs/ppc4.toml
+ppc64 1 twostream/runs/scan/inputs/ppc64.toml
+ppc256 1 twostream/runs/scan/inputs/ppc256.toml
+filt0 1 twostream/runs/scan/inputs/filt0.toml
+filt1 1 twostream/runs/scan/inputs/filt1.toml
+filt16 1 twostream/runs/scan/inputs/filt16.toml
+res3072 1 twostream/runs/scan/inputs/res3072.toml
+res768 1 twostream/runs/scan/inputs/res768.toml
+res192 1 twostream/runs/scan/inputs/res192.toml
+shape3 3 twostream/runs/scan/inputs/shape3.toml
