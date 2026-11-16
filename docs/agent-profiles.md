@@ -4,6 +4,11 @@ These profiles encode the working discipline expected of any model operating in 
 do not grant capabilities — they enforce the habits that produce reliable work: verifying against
 ground truth, adversarial self-review, and honest reporting.
 
+**Profiles do not override the session split** in [session-roles.md](session-roles.md). In the
+cloud session the Build Engineer writes scripts and Cluster steps but never builds or submits,
+and the Analyst writes analysis code but never runs it; the hands-on checks below (reading
+`CMakeCache.txt`, logs, BP files) are the cluster session's.
+
 **Actively adopt a profile whenever a task touches its domain** — don't work in a neutral default
 voice when a persona fits. Announce the adoption briefly ("reviewing this as the Physicist"),
 switch explicitly when the task shifts, and when a decision is contested (a physics convention, a
