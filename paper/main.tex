@@ -171,29 +171,42 @@ $k v_{th}\sim\gamma$, so heating feeds back on the measured growth rate.
 \label{sec:setup}
 
 We use the \textsc{Entity} PIC code~\citep{Entity} (v1.3.3, \texttt{streaming} problem
-generator) in one spatial dimension with periodic boundaries. Two electron species are loaded
-with drift $\pm\vz$ and a small thermal spread, over a fixed ion background.
-Table~\ref{tab:params} lists the baseline parameters; each scan varies one of $\ppc$,
-$\Delta x$, or the shape order while holding the others fixed. The box length $L$ is chosen so
-that $k_{\max}$ lies close to a box mode $k_m = 2\pi m/L$.
-\todo{fill in values from twostream.toml.}
+generator, input \texttt{twostream.toml}) in one spatial dimension with periodic boundaries.
+The setup has four species: two electron beams with drift four-velocity $u_x=\pm0.1$, and two
+positron species with the pusher disabled, which act as the immobile neutralizing background.
+The input \texttt{densities = [0.5, 0.5]} sets the total density of each electron--positron
+pair, so each beam has $n_b=0.25\,n_0$. With $d_0=c/\omega_{p0}=10$ this gives
+$\wb=\omega_{p0}\sqrt{0.25}=0.05$, and Eq.~\eqref{eq:gmax} predicts
+$\gamma_{\max}=0.025$ at $k_{\max}\approx0.435$, i.e.\ $\lambda_{\max}\approx14.4$. The box
+$L=100$ holds about 7 wavelengths of the fastest mode, and the box mode $m=7$ sits at
+$k\vz/\wb=0.875$, close to the peak at $0.866$. The run lasts $\wb t=50$, about 25
+$e$-foldings at $\gamma_{\max}$, which covers growth from the noise floor through
+saturation. Table~\ref{tab:params} lists the baseline. Each scan varies one of $\ppc$,
+$\Delta x$, or the shape order and holds the others fixed. The baseline grid resolves the
+beam Debye length $\lambda_D=v_{th}/\wb=0.2$ with $\Delta x/\lambda_D\approx0.04$, so the
+resolution scan has to coarsen the grid by more than an order of magnitude to reach the
+regime where finite-grid heating appears.
+\todo{update if the production runs change any of these values.}
 
 \begin{table}[t]
   \centering
-  \caption{Baseline parameters (code units, $c=1$).}
+  \caption{Baseline parameters from \texttt{twostream.toml} (code units, $c=1$).}
   \label{tab:params}
   \small
-  \begin{tabular}{@{}ll@{}}
+  \begin{tabular}{@{}lll@{}}
     \toprule
-    Parameter & Value \\
+    Parameter & Value & Normalized \\
     \midrule
-    Beam speed $\vz/c$                & \todo{} \\
-    Thermal spread $v_{th}/\vz$       & \todo{} \\
-    Box length $L\,\wb/\vz$           & \todo{} \\
-    Cells / resolution $\Delta x$      & \todo{} \\
-    Time step $\Delta t\,\wb$         & \todo{} \\
-    Particles per cell $\ppc$          & \todo{} \\
-    Shape order                        & \todo{} \\
+    Beam four-velocity $u_x$            & $\pm0.1$            & $\vz\approx0.0995\,c$ \\
+    Beam density $n_b$                  & $0.25\,n_0$         & $\wb=0.05$ \\
+    Temperature $T/m_ec^2$              & $10^{-4}$           & $v_{th}/\vz\approx0.1$ \\
+    Box length $L$                      & 100                 & $L\wb/\vz\approx50$ \\
+    Cells                               & 12288               & $\Delta x/\lambda_D\approx0.04$ \\
+    Time step (CFL $=0.5$)              & $\Delta t\approx0.0041$ & $\wb\Delta t\approx2\times10^{-4}$ \\
+    Particles per cell $\ppc$           & 16                  & \\
+    Current filter passes               & 4                   & \\
+    Run time                            & 1000                & $\wb t=50$ \\
+    Shape order                         & \todo{}             & \\
     \bottomrule
   \end{tabular}
 \end{table}
