@@ -6,11 +6,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Layout
 
-- `pgens/` — **user's problem generators** (pp, pp_IC, turbulence); builds point here via `-Dpgen`
+- `pgens/` — **user's problem generators** (pp, pp_IC, turbulence, streaming = verbatim Entity v1.3.3); builds point here via `-Dpgen`
 - `radiative/entity/` — Entity checkout (upstream v1.3.3rc) with build dirs `build_pp/`, `build_pp_IC/`
 - `analysis/` — **shared analysis home**: `scripts/` (bp_reader, viz_style, overview — general, run-agnostic), `reports/` (evidence reports)
 - `radiative/pp/` — per-run layout: `runs/<run>/` (`inputs/`, `scripts/`, `logs/`, `plots/`, optional run-specific `analysis/`; one dir per scratch run, currently `testPP`, `bw_aharonian`), plus `scripts/bind_gpu.sh`, `entity.xc` symlink
 - `radiative/pp_IC/` — run dir (old flat layout): `inputs/`, `scripts/` (SLURM), `logs/`, `analysis/`, `entity.xc` symlink
+- `twostream/` — 1D two-stream instability numerics study: `scripts/` (build, bind_gpu), `analysis/`, `runs/baseline/`, `runs/scan/` (see `twostream/README.md`)
 - `turb2d/` — empty scaffold
 - `docs/` — detailed guides (see index below)
 
