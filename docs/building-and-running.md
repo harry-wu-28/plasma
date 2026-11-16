@@ -63,6 +63,10 @@ SBATCH output path resolves; pp uses a per-run layout since 2026-07-07):
 - `radiative/pp/runs/testPP/scripts/gpu_pp.sh` — pp production run (2 L40S, 2 ranks)
 - `radiative/pp/runs/bw_aharonian/scripts/gpu_pp_bw.sh` — BW validation run (1 L40S, 1 rank)
 - `radiative/pp_IC/scripts/gpu_pp_IC.sh` — pp_IC run (2 L40S, 2 ranks)
+- `twostream/runs/baseline/scripts/gpu_twostream.sh` — 1D two-stream baseline (1 L40S);
+  `twostream/runs/scan/scripts/gpu_twostream_scan.sh` — numerics-scan SLURM array.
+  Binaries come from `twostream/scripts/build_twostream.sh` (`build_twostream_s<shape order>`,
+  `-Dpgen=pgens/streaming`), symlinked as `twostream/entity_s<N>.xc`. See `twostream/README.md`.
 
 All request `--partition=gpuq` and wrap the binary in the shared
 `radiative/pp/scripts/bind_gpu.sh` (pp_IC has its own copy), which maps each MPI local rank

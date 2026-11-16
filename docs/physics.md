@@ -83,6 +83,24 @@ PIC loop — this is where the user physics lives:
 **Species indexing: C++ indices are 0-based, TOML/output indices are 1-based.** Species 1–5 =
 primary e-, primary e+, photons, secondary e-, secondary e+.
 
+## Two-stream setup (`pgens/streaming`, verbatim Entity v1.3.3)
+
+Facts verified 2026-11-16 by reading v1.3.3 `src/archetypes/utils.h` and a CPU test run
+(1536 cells, ppc0 = 64, OpenMP build). Details and run steps: [twostream/README.md](../twostream/README.md).
+
+- `setup.densities[i]` is the **total** density of species pair (2i+1, 2i+2) in n0, split
+  evenly by `arch::InjectUniformMaxwellians`. With `densities = [0.5, 0.5]` each electron
+  beam has n_b = 0.25 n0 (`fN_1` mean = 0.25; species count = ppc0/4 × cells). So
+  ω_b = √n_b / skindepth0 = 0.05 for the upstream input, γ_max = ω_b/2 ≈ 0.025, not 0.035.
+- Each beam is injected co-located with its own immobile (`pusher = "None"`) positron
+  partner, so ρ = 0 at t = 0; the instability grows from shot noise only (no seeded mode).
+- Stats energy units: `T00` (incl. rest mass) is in n0 m c²; `E^2`/`B^2` columns are in B0
+  units, so field energy density is (σ0/2)·(E² + B²), σ0 = (skindepth0/larmor0)². Checked:
+  ΔT00 = −(σ0/2)ΔE1² through growth and saturation; total conserved to the 6-digit print
+  precision of `T00` (~5e-6) at λ_D/dx = 2.2.
+- At upstream ppc the field reaches a thermal-noise level ~1e-2 of saturation within
+  t ≈ 5, leaving only ~2 e-folds of linear growth: γ(k) fits need much higher ppc.
+
 ## Known physics issues (pp / pp_IC pgens)
 
 These are open research questions, not bugs to silently "fix" — flag any change touching them.
