@@ -26,9 +26,6 @@ __pycache__/
 *.pyo
 .ipynb_checkpoints/
 
-# Analysis plots (generated, not source)
-plots/
-
 # Editor / IDE
 .vscode/
 .idea/
