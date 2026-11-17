@@ -160,3 +160,35 @@ weights (`getInterpFlds<0>`).
 So `SHAPE_ORDER=3 bash twostream/scripts/build_twostream.sh` builds the *same* first-order
 code, and the `shape3` scan variant is not a shape-order test. A real higher-order build
 needs `-Ddeposit=esirkepov -Dshape_order=3`.
+
+## Growth-rate precision and why it is limited (2026-11-16)
+
+**Honest per-wave uncertainty.** A single straight-line fit of ln|E_m| over t = 60–140 gives
+error bars of ~0.01 ω_p, which hide the real uncertainty. Fitting the same mode over 40-unit
+windows sliding across t = 40–160 (before saturation at t ≈ 180) moves the rate by ±0.06–0.19
+ω_p (25–50% of theory). `analysis/slide_figures.py` plots the median over those windows with
+the window spread as the error bar. For the resolved waves m = 4–9 the median/theory ratios
+are 0.85, 0.96, 0.93, 1.01, 1.23, 0.98, so the **mean ratio is 0.99 ± 0.16** (± from
+propagating each wave's window spread; the six ratios alone give SE 0.05, but the windows
+overlap and the waves share one noise realization, so quote the conservative value). Fastest
+wave m = 7: 0.36 ± 0.12 ω_p vs theory 0.354. The earlier "0.352 vs 0.354" was window luck.
+m = 1–3 are uninformative (spread ±0.27–0.37); m = 11 sits high because it is driven by the
+strong modes (m = 12, with zero theoretical growth, grows as fast).
+
+**Why: only ~3.8 e-folds exist.** The m = 7 density ripple starts at the shot-noise floor
+δn/n_b ≈ 0.011 (median over t = 10–50) and saturates at ≈ 0.5, so ln(0.5/0.011) ≈ 3.8 e-folds
+from noise to saturation, and noise-driven wobble dominates any short single-mode fit. More
+particles help only logarithmically (noise ∝ 1/√N: 4× ppc ≈ +0.7 e-fold, 16× ≈ +1.4).
+
+**The streaming pgen cannot seed a wave from the TOML.** `pgens/streaming/pgen.hpp` reads only
+`setup.drifts_in_{x,y,z}`, `densities`, `temperatures`, `Bmag/Btheta/Bphi` and injects with
+`arch::InjectUniformMaxwellians` (uniform density, no spatial structure); the only field
+initializer is a uniform B. A seeded (ideally eigenvector-loaded) run needs a new or edited
+pgen, which is physics code (user's permission). Seeding would not add e-folds; it would make
+the seeded wave dominate its Fourier amplitude from t = 0 (estimated ~5–10% single-wave
+precision at baseline ppc, runtime ~300 is enough).
+
+**Entity's random seed is hard-coded.** `src/global/utils/numeric.h` defines
+`constant::RandomSeed`, used by `src/framework/domain/domain.h` for the random pool; there is
+no TOML option. Reruns at the same ppc reproduce the same noise, so ensemble averaging over
+noise realizations also needs a code change.
