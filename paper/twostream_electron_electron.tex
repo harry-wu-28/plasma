@@ -1,4 +1,4 @@
-% Electron-electron two-stream instability as a test of PIC numerics -- final report
+% Electron-electron two-stream instability visualized with a PIC simulation -- final report
 % Builds on Overleaf as-is (pdfLaTeX + BibTeX), or locally with
 % `latexmk twostream_electron_electron.tex`. Companion: twostream_electron_ion.tex.
 % Missing figures render as labelled placeholder boxes; see figures/README.md.
@@ -37,8 +37,8 @@
 \newif\ifdraft \drafttrue
 \newcommand{\todo}[1]{\ifdraft{\color{red}\textbf{[TODO:} #1\textbf{]}}\fi}
 
-\title{\vspace{-1.5em}The Electron Two-Stream Instability as a Test of\\
-       Particle-in-Cell Numerics}
+\title{\vspace{-1.5em}Watching the Electron Two-Stream Instability Grow\\
+       in a Particle-in-Cell Simulation}
 \author{Harry Wu}
 \date{\today}
 
@@ -50,10 +50,13 @@
 When two electron beams pass through each other, a small density ripple can grow exponentially
 into a large electric wave: the two-stream instability. For cold, equal beams, theory predicts
 the growth rate exactly, with maximum $\gamma_{\max}=\wb/2$, where $\wb$ is one beam's plasma
-frequency. We reproduce the instability with the particle-in-cell (PIC) code \textsc{Entity}
-and compare the measured growth rate with theory. Because the answer is known, the comparison
-shows whether the simulation, with its approximations, reproduces the analytic result.
-\todo{one sentence on the headline result once runs are in.}
+frequency, and it predicts that the growing wave does not travel. We use the particle-in-cell
+(PIC) code \textsc{Entity} to watch this theory happen. With no wave put in by hand, a wave
+grows exponentially and stays in place, as predicted, and the growth rates of the individual
+waves trace out the theory curve: averaged over the well-resolved waves, the ratio of measured
+to predicted growth rate is $0.99\pm0.06$. A ``quiet start'', with the particles evenly spaced
+instead of placed at random, makes this clear by lowering the starting noise about 28-fold. The
+goal is to visualize the physics, not to run a precision test.
 \end{abstract}
 
 % ===========================================================================
@@ -68,13 +71,15 @@ exponentially until the wave is strong enough to trap electrons in its potential
 wells~\citep{BohmGross1949,Chen2016}. A disturbance that grows on its own like this is an
 \emph{instability}.
 
-For cold beams (all electrons in a beam share one velocity) of equal density, the growth rate
-can be calculated exactly, which makes this a standard test for computer
-simulations~\citep{BirdsallLangdon1991}. A particle-in-cell (PIC) code cannot follow every
-electron in a real plasma. It follows a smaller number of ``macroparticles'' and computes the
-field on a grid. Both shortcuts are approximations: too few particles make the simulation noisy,
-and the grid can artificially heat the plasma~\citep{Langdon1970,Okuda1972}. Here we show that,
-with suitable settings, a PIC simulation reproduces the exact growth rate.
+For cold beams (all electrons in a beam share one velocity) of equal density, the theory can be
+solved exactly. It predicts how fast each wavelength grows, and that the growing wave stands
+still. Equations alone do not show what this looks like, so here we use a computer simulation as
+a camera~\citep{BirdsallLangdon1991}. A particle-in-cell (PIC) code follows a smaller number of
+``macroparticles'' than a real plasma has and computes the field on a grid. These shortcuts make
+the simulation noisy, and a grid that is too coarse can artificially heat the
+plasma~\citep{Langdon1970,Okuda1972}, so we expect the simulation to follow the theory only
+within its noise. Our aim is to see the two predictions, exponential growth and a wave that
+grows in place, emerge on their own from the particles and fields.
 
 % ===========================================================================
 \section{Linear theory}
@@ -188,9 +193,16 @@ The input \texttt{densities = [0.5, 0.5]} sets the density of each electron--pos
 $n_b=0.25\,n_0$ and $\wb=\omega_{p0}\sqrt{0.25}=0.05$. Equation~\eqref{eq:gmax} then predicts
 $\gamma_{\max}=0.025$ at $k_{\max}\approx0.435$ ($\lambda_{\max}\approx14.4$). A periodic box
 of length $L=100$ allows only $k=2\pi m/L$; the $m=7$ mode has $k\vz/\wb=0.875$, close to the
-peak at $0.866$. The run lasts $\wb t=50$, or 25 growth times $1/\gamma_{\max}$. Because it
-starts from random particle noise (no seeded wave), the fastest wave grows only about 3
-$e$-folds before it saturates; the rest of the run shows the nonlinear stage. Table~\ref{tab:params} lists all parameters. The Debye length of
+peak at $0.866$. Table~\ref{tab:params} lists all parameters.
+
+\paragraph{Two runs.} The \emph{random-start} run places particles at random and lasts
+$\wb t=50$. Its counting noise is large, so the fastest wave grows only about 3 $e$-folds before
+it saturates; we use it to show the nonlinear stage. The growth-rate measurements come from a
+\emph{quiet-start} run that is identical except in two ways. The particles start evenly spaced
+in each cell, with each positron on top of its electron, so the charge density is exactly zero at
+$t=0$; velocities are still random Maxwellians (problem generator \texttt{streaming\_quiet}). It
+also stops earlier, at $\wb t=15$, before saturation. Its effective seed is about 28 times
+smaller, which adds about 3.3 clean $e$-folds. The Debye length of
 all the electrons together is $\lambda_D=v_{th}/\wpe=0.14$, about 17 cells ($\Delta x/\lambda_D\approx0.06$),
 far from the regime $\lambda_D\ll\Delta x$ where finite-grid heating occurs.
 \todo{update if the production runs change any of these values.}
@@ -198,7 +210,7 @@ far from the regime $\lambda_D\ll\Delta x$ where finite-grid heating occurs.
 \begin{table}[t]
   \centering
   \caption{Simulation parameters from \texttt{twostream.toml} in code units ($c=1$), with
-  dimensionless ratios on the right.}
+  dimensionless ratios on the right. Run times are random start/quiet start.}
   \label{tab:params}
   \small
   \begin{tabular}{@{}lll@{}}
@@ -213,7 +225,7 @@ far from the regime $\lambda_D\ll\Delta x$ where finite-grid heating occurs.
     Time step (CFL $=0.5$)              & $\Delta t\approx0.0041$ & $\wb\Delta t\approx2\times10^{-4}$ \\
     Particles per cell $\ppc$           & 16                  & 4 per species \\
     Current filter passes               & 4                   & \\
-    Run time                            & 1000                & $\wb t=50$ \\
+    Run time                            & 1000/300            & $\wb t=50/15$ \\
     Particle shape                      & cloud-in-cell       & first order \\
     Pusher, deposit                     & Boris, zigzag       & \\
     \bottomrule
@@ -223,14 +235,16 @@ far from the regime $\lambda_D\ll\Delta x$ where finite-grid heating occurs.
 \paragraph{Measuring $\gamma(k)$.}
 We Fourier transform $E_x(x,t)$ in $x$ to get the amplitude $|\tilde E_k(t)|$ of each box wave.
 During growth $|\tilde E_k|\propto e^{\gamma t}$, so $\ln|\tilde E_k|$ versus $t$ is a straight
-line of slope $\gamma(k)$. We fit it between the noise floor and saturation, and take the spread
-over several fit windows as the uncertainty (Fig.~\ref{fig:growth}).
+line of slope $\gamma(k)$. We fit it over many 40-unit windows sliding across the growth phase
+($t\approx115$--$280$ in the quiet run), take the median as $\gamma$, and take the spread between
+windows as the uncertainty (Fig.~\ref{fig:growth}).
 
 \begin{figure}[t]
   \centering
   \figorbox{ee_growth_mode.pdf}{\columnwidth}{$\ln|\tilde E_k(t)|$ for $k\approx k_{\max}$, with fit}
-  \caption{Amplitude of the fastest-growing wave versus time. The dashed line is the
-  straight-line fit during exponential growth; its slope is $\gamma$. \todo{caption details.}}
+  \caption{Amplitude of the fastest-growing wave versus time (quiet start). Dashed: the theory
+  slope $e^{\gamma t}$, not fitted, started at the same point. The simulation follows it for about
+  4.2 $e$-folds (a factor of $\sim$66) and is still growing when the run ends.}
   \label{fig:growth}
 \end{figure}
 
@@ -239,31 +253,27 @@ over several fit windows as the uncertainty (Fig.~\ref{fig:growth}).
 \label{sec:results}
 
 \paragraph{Growth rate versus wavenumber.}
-Figure~\ref{fig:gammak} compares the measured $\gamma(k)$ with Eq.~\eqref{eq:gamma}. For the
-fastest wave ($m=7$, $k\vz/\wb=0.875$) we measure $\gamma=0.51\pm0.17\,\wb$
-($0.36\pm0.12\,\wpe$), against the theory value $\wb/2$ ($0.354\,\wpe$). The uncertainty is
-large because moving the fit window within $t=40$--$160$ changes the result by
-$0.06$--$0.19\,\wpe$. Averaged over the well-resolved waves $m=4$--$9$, the ratio of measured to
-theoretical growth rate is $0.99\pm0.16$ (per-wave ratios 0.85, 0.96, 0.93, 1.01, 1.23, 0.98), so
-on average the simulation is consistent with the cold-beam theory. The uncertainty propagates
-each wave's fit-window spread. We quote it instead of the smaller scatter-based standard error
-($0.05$) because all six waves grow from the same noise realization and so are not independent. Individual waves scatter by about $\pm30\%$ ($\pm25$--$50\%$). The scatter
-comes from the random-noise start: with only about 3 $e$-folds of clean growth, each fit is
-short. The longest waves ($m=1$--$3$) barely rise above the noise and are uninformative, and the
-wave nearest the cutoff $k\vz=\sqrt2\,\wb$ ($m=11$) sits high because the strongly growing
-modes drive it. A more precise test would seed the wave or average several runs with different
-random seeds. Both need code changes: the \texttt{streaming} problem generator loads only uniform
-drifting Maxwellians, and \textsc{Entity}'s random seed is a compile-time constant
-(\texttt{constant::RandomSeed}), not an input parameter.
+Figure~\ref{fig:gammak} compares the measured $\gamma(k)$ from the quiet-start run with
+Eq.~\eqref{eq:gamma}. For the fastest wave ($m=7$, $k\vz/\wb=0.875$) we measure
+$\gamma=0.48\pm0.03\,\wb$ ($0.342\pm0.024\,\wpe$), against the theory value $\wb/2$
+($0.354\,\wpe$). Averaged over the well-resolved waves $m=4$--$9$, the ratio of measured to
+theoretical growth rate is $0.99\pm0.06$ (conservative, since the waves share one noise
+realization), and the median spread of a single wave is 15\% of theory. The slow
+growers, the longest waves ($m=1$--$3$) and those near the cutoff $k\vz=\sqrt2\,\wb$
+($m=10$--$11$), grow so little before the run ends that they stay close to the noise and are
+pushed around by the strong modes, so their fits remain noisy.
+
+The random-start run gives the same average but far more scatter ($0.99\pm0.16$; single waves
+$\pm30\%$), because it has only about 3 $e$-folds of clean growth: where the particles start
+matters.
 
 \begin{figure}[t]
   \centering
   \figorbox{ee_gamma_vs_k.pdf}{\columnwidth}{measured $\gamma(k)/\wb$ vs.\ $k\vz/\wb$ with theory}
-  \caption{Measured growth rate of each box wave (points) compared with the cold-beam theory,
-  Eq.~\eqref{eq:gamma} (line). Error bars show the spread of $\gamma$ over fit windows within
-  $t=40$--$160$. The well-resolved waves $m=4$--$9$ agree with theory on average
-  (ratio $0.99\pm0.16$) but scatter individually by about $\pm30\%$; $m=1$--$3$ are
-  noise-dominated and $m=11$ is driven by the fastest modes.}
+  \caption{Measured growth rate of each box wave in the quiet-start run (points) compared with
+  the cold-beam theory, Eq.~\eqref{eq:gamma} (line). Error bars show the spread of $\gamma$ over
+  fit windows. The well-resolved waves $m=4$--$9$ follow the curve (ratio $0.99\pm0.06$); the
+  slow growers $m=1$--$3$ and $10$--$11$ remain noisy.}
   \label{fig:gammak}
 \end{figure}
 
@@ -271,11 +281,17 @@ drifting Maxwellians, and \textsc{Entity}'s random seed is a compile-time consta
 \section{Discussion and conclusions}
 \label{sec:discussion}
 
-\todo{Summarize: (i) PIC recovers $\gamma(k)$ on average (ratio $0.99\pm0.16$ for $m=4$--$9$),
-with $\sim\pm30\%$ scatter per wave; (ii) limitations: random-noise start gives only $\sim3$
-$e$-folds of growth, the small thermal spread lowers $\gamma$ slightly, and only box modes are
-sampled; (iii) seeding or averaging over random seeds would sharpen the test, but both need code
-changes (pgen initialization; hard-coded \texttt{constant::RandomSeed}).}
+The simulation shows the two-stream instability as the cold-fluid theory describes it. With no
+wave put in by hand, a ripple grows exponentially, following the theory slope for about 4.2
+$e$-folds (Fig.~\ref{fig:growth}). It grows in place: the measured real frequency is at most
+$0.02\,\wb$ ($0.014\,\wpe$), as $\mathrm{Re}\,\omega=0$ requires. The growth rates of the
+individual waves trace out the theory curve (Fig.~\ref{fig:gammak}), with a ratio of
+$0.99\pm0.06$ over the well-resolved waves. The longer random-start run shows what follows:
+the wave traps the electrons and growth stops.
+
+The slow growers remain hard to measure. The practical lesson is that in a PIC simulation,
+where the particles start matters: an evenly spaced start lowered the noise about 28-fold and
+turned a blurry comparison into a clear one.
 
 {\small\setlength{\bibsep}{1pt}
 \bibliographystyle{unsrtnat}
