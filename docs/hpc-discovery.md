@@ -22,6 +22,11 @@ the cluster directly (`sinfo`, `sacct`) — never assert policy numbers from mem
 
 ## Scratch layout (surveyed 2026-07-07 — re-verify with `ls` before relying on it)
 
+**2026-11-16 re-survey:** the whole `radiative/` tree below is gone (consistent with the
+~45-day purge; all of it dated July). Scratch held only
+`twostream/cpu/{twostream_baseline/, twostream_baseline.ckpt/}` (CPU baseline, job 11088180).
+The radiative SLURM scripts still point at `radiative/{pp,pp_IC,IC}` and will recreate them.
+
 Entity runs with cwd = `WORK_DIR` and creates a directory tree named after `simulation.name`
 from the TOML:
 
