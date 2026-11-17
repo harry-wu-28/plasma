@@ -1,0 +1,119 @@
+# Electron beam through stationary ions (Chen §6.6, Eqs. 6.19-6.35; the Buneman
+# instability), 1D, with Entity v1.3.3's unmodified `streaming` pgen (pgens/streaming).
+#
+# Species (1-based, as in output):
+#   1  e-     m = 1,     q = -1, drift u = 0.1   the electron stream (Chen's v0)
+#   2  ion    m = 1836,  q = +1, at rest, MOBILE ion response (Chen's M)
+#   3  jret   m = 1e8,   q = +1, drift u = 0.1   rigid return current (see below)
+#   4  jbg    m = 1e8,   q = -1, at rest, pusher None   neutralizes species 3
+#
+# Why species 3/4 exist: Chen's analysis is electrostatic (Poisson), which has no k = 0
+# field. Entity advances E with Ampere's law, and in 1D dEx/dt = -Jx, so the uniform beam
+# current -n e v0 would build a uniform Ex and make the whole beam oscillate at omega_pe
+# with amplitude v0 (rather than stream through the ions). Species 3 carries +n e v0 and
+# cancels the k = 0 current. Its mass is so large that (q/m) E dt is below single-precision
+# round-off on u = 0.1: it moves rigidly and adds omega_pe^2 * 1e-8 to the dispersion
+# relation (negligible). Species 4 is an immobile negative background (pusher None
+# deposits no current) so 3+4 are neutral. Equivalent to an external uniform current; this
+# avoids writing new pgen code.
+#
+# Derived scales (c = 1, Entity units; per-species density = densities[i]/2 in n0):
+#   n_e = n_i = 1.0 n0 -> omega_pe = 1/skindepth0 = 0.1, 16 macroparticles/cell/species
+#   u0 = gamma v = 0.1 -> v0 = 0.0995 c, gamma0 = 1.005 (longitudinal mass gamma0^3 = 1.015)
+#   cold Chen/Buneman: 1 = omega_p^2 [ (m/M)/w^2 + 1/(w - k v0)^2 ]
+#     gamma_max ~ (sqrt3/2)(m/2M)^(1/3) omega_pe = 0.0561 omega_pe = 5.6e-3 at k v0 ~ omega_pe
+#     -> k ~ 1.0 (lambda ~ 6.3, box mode m ~ 16 of L = 100); e-folding time ~ 180
+#   T_e = 1e-6 m_e c^2 -> v_th,e = 1e-3 c = 0.01 v0 (cold: v_th,e k / gamma ~ 0.18)
+#     lambda_De = v_th,e / omega_pe = 0.010 ~ dx = 100/10240 = 0.0098
+#   T_i = 1e-6 m_e c^2 -> v_th,i = 2.3e-5 c << Re(w)/k ~ 3e-3 c
+#   dt = CFL dx = 4.9e-3 -> ~8.2e5 steps to t = 4000 (~22 e-folds)
+
+[simulation]
+  name    = "buneman"
+  engine  = "srpic"
+  runtime = 4000.0
+
+[grid]
+  resolution = [10240]
+  extent     = [[0.0, 100.0]]
+
+  [grid.metric]
+    metric = "minkowski"
+
+  [grid.boundaries]
+    fields    = [["PERIODIC"]]
+    particles = [["PERIODIC"]]
+
+[scales]
+  larmor0    = 100.0
+  skindepth0 = 10.0
+
+[algorithms]
+  current_filters = 4
+
+  [algorithms.timestep]
+    CFL = 0.5
+
+[particles]
+  ppc0 = 16.0
+
+  [[particles.species]]
+    label    = "e-"
+    mass     = 1.0
+    charge   = -1.0
+    maxnpart = 1e6
+
+  [[particles.species]]
+    label    = "ion"
+    mass     = 1836.0
+    charge   = 1.0
+    maxnpart = 1e6
+
+  [[particles.species]]
+    label    = "jret"
+    mass     = 1e8
+    charge   = 1.0
+    maxnpart = 1e6
+
+  [[particles.species]]
+    label    = "jbg"
+    mass     = 1e8
+    charge   = -1.0
+    maxnpart = 1e6
+    pusher   = "None"
+
+[setup]
+  drifts_in_x  = [0.1, 0.0, 0.1, 0.0]
+  drifts_in_y  = [0.0, 0.0, 0.0, 0.0]
+  drifts_in_z  = [0.0, 0.0, 0.0, 0.0]
+  # Pair totals in n0 (pairs: species 1+2, 3+4), split evenly within each pair
+  densities    = [2.0, 2.0]
+  # In units of m_e c^2 (the injector divides by each species' mass)
+  temperatures = [1e-6, 1e-6, 1e-6, 1e-6]
+
+[output]
+  format        = "BPFile"
+  interval_time = 4.0
+
+  [output.fields]
+    quantities = ["N_1", "N_2", "E", "J", "T0i_1"]
+
+  [output.particles]
+    species       = [1, 2]
+    stride        = 20
+    interval_time = 20.0
+
+  [output.spectra]
+    enable = false
+
+  [output.stats]
+    enable        = true
+    interval_time = 1.0
+    quantities    = ["E^2", "B^2", "T00_1", "T00_2"]
+
+[checkpoint]
+  interval_time = 200.0
+  keep          = 1
+
+[diagnostics]
+  colored_stdout = false

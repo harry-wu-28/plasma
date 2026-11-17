@@ -147,6 +147,35 @@ With ω_pe = 0.1 and L = 100: box mode m = 16 sits on the peak, m ≤ 17 are uns
 e-folding time is ≈184, and the run (t = 4000) covers ≈22 e-folds. The report is
 `paper/twostream_electron_ion.tex`.
 
+**Setup (`runs/buneman/`).** The input uses the unmodified streaming pgen: species 1 = e⁻
+(u0 = 0.1), 2 = mobile ions (M/m = 1836), 3 = rigid return current (m = 1e8, +q, u0 = 0.1),
+and 4 = its immobile −q background (pusher None). Species 3/4 are there because Chen's
+theory is electrostatic (no k = 0 field), but Entity advances E with Ampère's law, and in
+1D the uniform beam current would build a uniform Ex (dEx/dt = −Jx). That would make the
+whole beam oscillate at ω_pe with amplitude v0. With species 3, mean Ex stays at ~1e-3 in
+the linear phase and ~1e-2 at saturation, against J0/ω_pe ≈ 1 uncompensated. Cost on 32
+OpenMP threads is 22 ms/step, ~85% of it particle deposit and push, since three species
+move: ~5× the particles of the e-e baseline.
+
+**Result (CPU job 11091422, 2026-11-16, cancelled by the user at t ≈ 936 after
+saturation).** Output is in `/dartfs-hpc/scratch/f007hd2/twostream/cpu/buneman` and the plots
+are in `runs/buneman/plots/` (`analysis/buneman_analysis.py RUN --out DIR --window 400 700`).
+- *What matches Chen:* from t ≈ 300 to saturation the field spectrum is dominated by
+  m = 13–17 (k v0/ω_pe = 0.82–1.07), 10× the median mode, i.e. the instability picks Chen's
+  wavelength. m = 16 (the theoretical peak) grows from 0.069 to 0.395 over t = 400–700 and
+  saturates at t ≈ 750.
+- *What does not give a clean γ(k):* noise grows roughly linearly in time (band rms
+  0.013 → 0.09 over t = 12–190). It comes from the beam resonantly sweeping past frozen ion
+  positions at k v0 ≈ ω_pe, so only ~1.6 e-folds of exponential growth separate the noise
+  from saturation (window t = 400–700 = 1.63 e-folds at γ_max). With the e-e rule (≥ 1.5
+  theoretical e-folds in the window) only m = 16 counts: γ = 0.0061 ± 0.0001 vs Chen
+  0.0054 (1.12×). Over the same window the median mode, and the stable modes m = 18–24
+  (γ_th = 0), also grow at ~0.0045–0.011, so the band growth rate cannot be separated from
+  broadband growth of the spectrum. Not presentable as a γ(k) comparison.
+- *To improve:* fixing this needs a quieter start or many more particles per cell (noise
+  ∝ 1/√N), or a lighter ion (M/m = 100 grows 2.6× faster). Running longer does not help:
+  everything after t ≈ 750 is saturation.
+
 ## Numerics actually used: Boris + zigzag + first-order shape (verified 2026-11-16)
 
 From the baseline run's own report (`twostream_baseline.info`: `Deposit: zigzag`,
