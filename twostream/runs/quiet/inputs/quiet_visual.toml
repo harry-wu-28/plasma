@@ -1,0 +1,115 @@
+# Two-stream instability baseline: Entity v1.3.3 upstream pgens/streaming/twostream.toml
+# (tag v1.3.3, commit 5bf97fd). Physics parameters are UNCHANGED from upstream.
+# Only I/O was adjusted for this repo:
+#   - output.format = "BPFile"   (upstream omits it; Entity's default is hdf5,
+#                                 and this repo's readers are ADIOS2/BP5)
+#   - output.stats interval      (dense energy history for the growth-rate fit)
+#   - checkpoint                 (default is every 1000 steps; ~2.5e5 steps here)
+#
+# Derived scales (c = 1, Entity units; n0 = ppc0/V0, skindepth0 = c/omega_p for n0):
+#   setup.densities[i] is the TOTAL density of pair (2i+1, 2i+2), split evenly by
+#   arch::InjectUniformMaxwellians -> each electron beam has n_b = 0.25 n0
+#   (so ppc0 = 16 gives 4 macroparticles per cell per species; verified in a CPU
+#   test 2026-11-16: fN_1 mean = 0.25, species counts = ppc0/4 * cells).
+#   omega_b = sqrt(n_b)/skindepth0 = 0.05; with the gamma0^3 longitudinal mass,
+#   omega_b,eff = 0.0496
+#   u = gamma*v = 0.1  ->  v0 = 0.0995 c, gamma0 = 1.005
+#   cold symmetric theory: gamma_max = omega_b/2 = 0.0248 at k v0 = (sqrt3/2) omega_b
+#     -> k_max = 0.432 (lambda ~ 14.5, ~7 wavelengths in the box)
+#     -> unstable for k v0 < sqrt2 omega_b  (k < 0.705, box modes m <= 11)
+#   T = 1e-4 -> v_th = 0.01 c, lambda_D = v_th/omega_pe(total e-) = 0.14 = 17 cells
+#   dx = 100/12288 = 8.1e-3, dt = CFL*dx = 4.1e-3 -> ~2.5e5 steps to t = 1000
+#   runtime 1000 ~ 25 e-folding times of the fastest mode
+
+[simulation]
+  name    = "quiet_visual"
+  engine  = "srpic"
+  runtime = 1000.0
+
+[grid]
+  resolution = [12288]
+  extent     = [[0.0, 100.0]]
+
+  [grid.metric]
+    metric = "minkowski"
+
+  [grid.boundaries]
+    fields    = [["PERIODIC"]]
+    particles = [["PERIODIC"]]
+
+[scales]
+  larmor0    = 100.0
+  skindepth0 = 10.0
+
+[algorithms]
+  current_filters = 4
+
+  [algorithms.timestep]
+    CFL = 0.5
+
+[particles]
+  ppc0 = 64.0
+
+  [[particles.species]]
+    label    = "e-Px"
+    mass     = 1.0
+    charge   = -1.0
+    maxnpart = 1e7
+
+  [[particles.species]]
+    label    = "e+bg1"
+    mass     = 1.0
+    charge   = 1.0
+    maxnpart = 1e7
+    pusher   = "None"
+
+  [[particles.species]]
+    label    = "e-Mx"
+    mass     = 1.0
+    charge   = -1.0
+    maxnpart = 1e7
+
+  [[particles.species]]
+    label    = "e+bg2"
+    mass     = 1.0
+    charge   = 1.0
+    maxnpart = 1e7
+    pusher   = "None"
+
+[setup]
+  # Drift 4-velocities (u = gamma v) per species; species 2/4 are the immobile
+  # neutralizing background (pusher = "None").
+  drifts_in_x = [0.1, 0.0, -0.1, 0.0]
+  drifts_in_y = [0.0, 0.0, 0.0, 0.0]
+  drifts_in_z = [0.0, 0.0, 0.0, 0.0]
+  # Pair-wise densities in units of n0 (pairs: species 1+2, 3+4)
+  densities = [0.5, 0.5]
+  # Temperatures in units of m c^2
+  temperatures = [1e-4, 1e-4, 1e-4, 1e-4]
+
+[output]
+  format        = "BPFile"
+  interval_time = 2.0
+
+  [output.fields]
+    quantities = ["N_1", "N_3", "E", "B", "J", "T0i_1", "T0i_3"]
+
+  [output.particles]
+    species = [1, 3]
+    stride  = 10
+
+  [output.spectra]
+    enable = false
+
+  [output.stats]
+    enable        = true
+    interval_time = 0.5
+    quantities    = ["E^2", "B^2", "T00"]
+
+[checkpoint]
+  interval_time = 100.0
+  keep          = 1
+
+[diagnostics]
+  colored_stdout = false
+  log_level      = "WARNING"
