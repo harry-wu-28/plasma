@@ -1,0 +1,261 @@
+% Electron-ion (Buneman) two-stream instability: electron beam through stationary ions
+% Builds on Overleaf as-is (pdfLaTeX + BibTeX), or locally with
+% `latexmk twostream_electron_ion.tex`. Companion: twostream_electron_electron.tex.
+% Run: twostream/runs/buneman (input buneman.toml). Missing figures render as placeholders.
+% Audience: an undergraduate taking a first course in plasma physics.
+\documentclass[10pt,twocolumn,letterpaper]{article}
+
+\usepackage[letterpaper,margin=0.75in,columnsep=0.25in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb}
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{siunitx}
+\usepackage[font=small,labelfont=bf]{caption}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage[colorlinks=true,allcolors=blue!50!black]{hyperref}
+
+% ---- Notation -------------------------------------------------------------
+\newcommand{\wpe}{\omega_{pe}}        % electron plasma frequency
+\newcommand{\wpi}{\omega_{pi}}        % ion plasma frequency
+\newcommand{\vz}{v_0}                 % electron beam drift speed
+\newcommand{\ppc}{N_\mathrm{ppc}}     % particles per cell
+\newcommand{\dd}{\mathrm{d}}
+
+% ---- Figure placeholder: \figorbox{file}{width}{label shown while missing} --
+\newcommand{\figorbox}[3]{%
+  \IfFileExists{figures/#1}%
+    {\includegraphics[width=#2]{figures/#1}}%
+    {\fbox{\parbox[c][0.55#2][c]{\dimexpr#2-2\fboxsep-2\fboxrule\relax}{\centering\small\textit{Placeholder:}\\ #3\\ \texttt{figures/\detokenize{#1}}}}}}
+
+% ---- Margin notes for drafting (set \drafttrue -> \draftfalse to hide) -----
+\newif\ifdraft \drafttrue
+\newcommand{\todo}[1]{\ifdraft{\color{red}\textbf{[TODO:} #1\textbf{]}}\fi}
+
+\title{\vspace{-1.5em}The Electron--Ion (Buneman) Two-Stream Instability:\\
+       an Electron Beam through Stationary Ions}
+\author{Harry Wu}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+An electron beam streaming through ions that are initially at rest is unstable: small density
+ripples grow exponentially into a large electric wave. This is the Buneman, or electron--ion
+two-stream, instability. Cold-fluid theory predicts that the fastest-growing wave has
+$k\vz\approx\wpe$ and growth rate $\gamma_{\max}\approx\tfrac{\sqrt3}{2}(m/2M)^{1/3}\wpe$, about
+$0.054\,\wpe$ for hydrogen. Unlike the instability between two electron beams, this wave also
+oscillates, at a real frequency of about $0.036\,\wpe$. We reproduce the instability with the
+particle-in-cell (PIC) code \textsc{Entity} and compare the measured growth rate and frequency
+with theory.
+\todo{one sentence on the headline result once the run is in.}
+\end{abstract}
+
+% ===========================================================================
+\section{Introduction}
+\label{sec:intro}
+
+Picture a beam of electrons streaming at speed $\vz$ through a plasma whose ions are at rest.
+This is what happens when a current flows through a plasma. Suppose a small ripple appears in
+the ion density. Its electric field slows some electrons and speeds up others, so the
+electrons bunch. The electron bunches in turn
+pull on the ions and deepen the original ripple. Under the right conditions this feedback runs
+away and the ripple grows exponentially, an \emph{instability}~\citep{Buneman1959,Chen2016}.
+
+The ions are essential. If they were infinitely heavy and could not move, the electrons alone
+would only support ordinary plasma oscillations carried along by the beam, which do not grow.
+Because ions are heavy, they respond slowly, and the growth is much slower than when two
+electron beams stream through each other (companion report). Even so, the growth rate scales as
+the cube root of the mass ratio, $(m/M)^{1/3}$, not its square root, so it remains fast enough to matter in real current-carrying
+plasmas, where it heats the electrons and acts as an effective resistance~\citep{Buneman1959}.
+
+As in the electron--electron case, the cold, uniform version can be solved exactly, so it is a
+good test of a particle-in-cell (PIC) simulation~\citep{BirdsallLangdon1991}. Here we check that
+a PIC simulation reproduces both the growth rate and the oscillation frequency predicted by
+theory.
+
+% ===========================================================================
+\section{Linear theory}
+\label{sec:theory}
+
+\paragraph{Dispersion relation.}
+Electrons of density $n_0$ stream at $+\vz$ through ions of density $n_0$ and mass $M$ that start
+at rest. Both species are cold. The electron and ion plasma frequencies are
+\begin{equation}
+  \wpe^2 = \frac{n_0e^2}{\varepsilon_0 m}, \qquad \wpi^2 = \frac{n_0e^2}{\varepsilon_0 M}
+  = \frac{m}{M}\,\wpe^2 .
+\end{equation}
+The derivation is the same as for two electron beams: linearize each species' continuity
+equation and Newton's law for a ripple $\propto e^{i(kx-\omega t)}$, and insert the density
+ripples into Gauss's law. Each species contributes one term $\omega_{pj}^2/(\omega-kv_{0j})^2$,
+where $v_{0j}$ is its drift, so~\citep{Chen2016}
+\begin{equation}
+  1 = \frac{\wpi^2}{\omega^2} + \frac{\wpe^2}{(\omega - k\vz)^2}.
+  \label{eq:disp}
+\end{equation}
+If the ions could not move ($\wpi\to0$) this gives $\omega = k\vz\pm\wpe$, which is real, so
+nothing grows. With mobile ions, Eq.~\eqref{eq:disp} is a quartic in $\omega$. For some $k$ two
+of its roots are complex, $\omega=\omega_r\pm i\gamma$, and the root with $\gamma>0$ grows as
+$e^{\gamma t}$ while it oscillates at $\omega_r$.
+
+\paragraph{Approximate solution.}
+The strongest growth occurs when the beam electrons see the wave at their own natural
+frequency, $k\vz\approx\wpe$. Because ions are heavy, the wave there is slow, $|\omega|\ll\wpe$.
+Setting $k\vz=\wpe$ and expanding the electron term to first order in $\omega/\wpe$,
+\begin{equation}
+  \frac{\wpe^2}{(\omega-\wpe)^2} = \frac{1}{(1-\omega/\wpe)^2} \approx 1 + \frac{2\omega}{\wpe}.
+\end{equation}
+Equation~\eqref{eq:disp} then becomes $0 = \wpi^2/\omega^2 + 2\omega/\wpe$, or
+\begin{equation}
+  \omega^3 = -\frac{m}{2M}\,\wpe^3 .
+\end{equation}
+The cube roots of $-1$ include $e^{i\pi/3}=\tfrac12+i\tfrac{\sqrt3}{2}$, so the growing root is
+\begin{equation}
+  \omega \approx \Bigl(\frac{m}{2M}\Bigr)^{1/3}\wpe\Bigl(\frac12 + i\,\frac{\sqrt3}{2}\Bigr).
+  \label{eq:approx}
+\end{equation}
+For hydrogen, $M/m=1836$, so $(m/2M)^{1/3}=0.065$ and $\gamma_{\max}\approx0.056\,\wpe$. The
+cube root is why the growth is not as slow as the ion response alone would suggest: ions on
+their own oscillate at $\wpi=0.023\,\wpe$, yet the wave grows more than twice as fast.
+
+\paragraph{Exact solution.}
+Solving the quartic numerically for each $k$ gives $\gamma_{\max}=0.0544\,\wpe$ at
+$k\vz=1.006\,\wpe$, with $\omega_r=0.036\,\wpe$. The approximation in Eq.~\eqref{eq:approx} is
+therefore good to about 3\% in $\gamma$. Waves with $k\vz>(1+(m/M)^{1/3})^{3/2}\,\wpe=1.125\,\wpe$
+do not grow. The wave's phase speed $\omega_r/k\approx0.035\,\vz$ is nearly zero, so in the ion
+frame the wave is almost standing still. This is what lets the slow ions keep up with it. These
+exact $\gamma(k)$ and $\omega_r(k)$ curves are our reference. As in the electron--electron case,
+growth stops once the wave is strong enough to trap the electrons.
+
+% ===========================================================================
+\section{The particle-in-cell method}
+\label{sec:pic}
+
+A PIC code follows ``macroparticles'', each standing for many real particles with the same
+charge-to-mass ratio, and stores the fields on a grid of spacing $\Delta x$, with $\ppc$
+particles per cell~\citep{BirdsallLangdon1991,HockneyEastwood1988}. Each time step $\Delta t$
+(1) gathers the field at each particle from nearby grid points, (2) pushes the particles with
+Newton's law, (3) deposits their current onto the grid, and (4) updates the fields. With no
+magnetic field the push is the leapfrog scheme, $v^{n+1/2}=v^{n-1/2}+(q/m)E^n\Delta t$ and
+$x^{n+1}=x^n+v^{n+1/2}\Delta t$~\citep{Boris1970}. The deposited current conserves charge
+exactly~\citep{Esirkepov2001,Umeda2003}, and in 1D Amp\`ere's law reduces to
+$\partial_t E_x=-J_x/\varepsilon_0$. Using few particles makes the density noisy,
+$\delta n/n\sim\ppc^{-1/2}$. This noise supplies the initial ripple, so none has to be added by
+hand. The companion report describes these steps in more detail.
+
+% ===========================================================================
+\section{Simulation setup}
+\label{sec:setup}
+
+We use \textsc{Entity}~\citep{Entity} (v1.3.3, \texttt{streaming} problem generator, input
+\texttt{buneman.toml}) in 1D with periodic boundaries. Code units have $c=1$ and a reference
+skin depth $d_0=10$. Electrons and ions each have density $n_0$, so $\wpe=0.1$.
+
+\paragraph{Species.}
+Species 1 is the electron beam, with four-velocity $u_x=\gamma_L v_x/c=0.1$
+($\vz\approx0.0995\,c$). At this speed the Lorentz factor $\gamma_L\approx1$, so the beam is
+non-relativistic. The small relativistic correction lowers $\wpe$ by 0.75\%. Species 2 is the
+ions, with $M/m=1836$, initially at rest but free to move.
+
+\paragraph{The return current.}
+In a real plasma the current carried by the beam is balanced by the rest of the circuit. In a
+1D periodic box there is nothing to balance it. Because \textsc{Entity} advances the field with
+Amp\`ere's law, a uniform beam current would build up a uniform electric field and make the
+whole beam slosh back and forth at $\wpe$ instead of streaming through the ions. To cancel it,
+species 3 is a positive species that moves with the beam and carries the opposite current. Its
+mass ($10^8\,m$) is so large that the field cannot change its velocity, so it acts as a fixed
+external current. Species 4 is an equally heavy negative species that never moves and keeps
+species 3 neutral. Together they add only $\sim10^{-8}\wpe^2$ to Eq.~\eqref{eq:disp}, which is
+negligible. The electron--electron problem does not need this, because its two beams carry
+equal and opposite currents.
+
+\paragraph{Parameters.}
+The fastest-growing wave has $k_{\max}\approx1.01$ ($\lambda\approx6.2$). In a box of length
+$L=100$ the allowed waves have $k=2\pi m/L$, and mode $m=16$ sits on the peak. Modes up to
+$m=17$ are unstable. The growth time is $1/\gamma_{\max}\approx184$, and the run lasts
+$t=4000$, about 22 $e$-foldings. The beams are nearly cold: the thermal speed
+$v_{th}=10^{-3}c$ is only 1\% of $\vz$, though thermal smearing ($k v_{th}/\gamma\approx0.2$)
+may lower $\gamma$ slightly. The electron Debye length $\lambda_{De}=v_{th}/\wpe=0.01$ is about
+one cell. Table~\ref{tab:params} lists all parameters.
+\todo{shape order; update if the run changes any values.}
+
+\begin{table}[t]
+  \centering
+  \caption{Simulation parameters from \texttt{buneman.toml} in code units ($c=1$), with
+  dimensionless ratios on the right.}
+  \label{tab:params}
+  \small
+  \begin{tabular}{@{}lll@{}}
+    \toprule
+    Parameter & Value & Normalized \\
+    \midrule
+    Beam four-velocity $u_x$            & $0.1$               & $\vz\approx0.0995\,c$ \\
+    Density $n_e=n_i$                   & $n_0$               & $\wpe=0.1$ \\
+    Ion mass $M$                        & $1836\,m$           & $\wpi=0.023\,\wpe$ \\
+    Temperature $T/mc^2$               & $10^{-6}$           & $v_{th}/\vz\approx0.01$ \\
+    Box length $L$                      & 100                 & $L\wpe/\vz\approx100$ \\
+    Cells                               & 10240               & $\Delta x/\lambda_{De}\approx1$ \\
+    Time step (CFL $=0.5$)              & $\Delta t\approx0.0049$ & $\wpe\Delta t\approx5\times10^{-4}$ \\
+    Particles per cell $\ppc$           & 16                  & \\
+    Current filter passes               & 4                   & \\
+    Return-current mass                 & $10^8\,m$           & \\
+    Run time                            & 4000                & $\gamma_{\max}t\approx22$ \\
+    Shape order                         & \todo{}             & \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\paragraph{Measuring $\gamma$ and $\omega_r$.}
+We Fourier transform $E_x(x,t)$ in $x$ to get the complex amplitude $\tilde E_k(t)$ of each box
+wave. Its magnitude grows as $e^{\gamma t}$, so $\ln|\tilde E_k|$ versus $t$ is a straight line
+of slope $\gamma(k)$. Its phase advances at the rate $\omega_r(k)$, which the
+electron--electron case does not have, since there $\omega_r=0$. We fit both between the noise
+floor and saturation (Fig.~\ref{fig:growth}).
+
+\begin{figure}[t]
+  \centering
+  \figorbox{ei_growth_mode.pdf}{\columnwidth}{$\ln|\tilde E_k(t)|$ for mode $m=16$, with fit}
+  \caption{Amplitude of the fastest-growing wave ($m=16$) versus time. The dashed line is the
+  straight-line fit during exponential growth; its slope is $\gamma$. \todo{caption details.}}
+  \label{fig:growth}
+\end{figure}
+
+% ===========================================================================
+\section{Results}
+\label{sec:results}
+
+Figure~\ref{fig:disp} compares the measured growth rate and frequency of each mode with the
+exact roots of Eq.~\eqref{eq:disp}.
+\todo{describe agreement: measured $\gamma_{\max}/\wpe$ vs.\ 0.0544, $\omega_r/\wpe$ vs.\
+0.036, location of the peak, behavior near the cutoff $k\vz=1.125\,\wpe$; any effect of the
+small beam temperature.}
+
+\begin{figure}[t]
+  \centering
+  \figorbox{ei_dispersion.pdf}{\columnwidth}{$\gamma/\wpe$ and $\omega_r/\wpe$ vs.\ $k\vz/\wpe$: theory and measured}
+  \caption{Growth rate $\gamma$ and real frequency $\omega_r$ of each box mode (points) compared
+  with the exact roots of Eq.~\eqref{eq:disp} (lines). \todo{caption details.}}
+  \label{fig:disp}
+\end{figure}
+
+% ===========================================================================
+\section{Discussion and conclusions}
+\label{sec:discussion}
+
+\todo{Summarize: (i) how well PIC recovers $\gamma(k)$ and $\omega_r(k)$; (ii) comparison with
+the electron--electron case (slower growth, nonzero $\omega_r$, role of ion inertia); (iii)
+limitations, e.g.\ small thermal spread, the return-current species, and only box modes are
+sampled.}
+
+{\small\setlength{\bibsep}{1pt}
+\bibliographystyle{unsrtnat}
+\bibliography{refs}}
+
+\end{document}

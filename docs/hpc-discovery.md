@@ -70,6 +70,12 @@ because the build had `gpu_aware_mpi=ON` while the runtime OpenMPI is not CUDA-a
 - This project uses `--partition=gpuq` (L40S nodes, 5-day time limit). Other GPU partitions
   exist (`a100`, `h200`, `*_preemptable` with shorter limits) — check `sinfo -s` for current
   availability before suggesting one.
+- **Per-user CPU cap: 32 cores in total** (verified 2026-11-17, `sacctmgr show assoc
+  user=f007hd2`: account `free`, `GrpTRES cpu=32`). All running jobs together must fit in 32
+  CPUs; a larger request pends forever with reason `AssocGrpCpuLimit` (job 11093049, 128
+  CPUs). So multi-node CPU runs are not possible on this account. CPU two-stream runs use
+  `preemptable` (64-core nodes, usually idle, jobs can be requeued: use checkpoints +
+  `--requeue`), e.g. the CPU baseline (11088180) and the quiet-start visual run (11093069).
 - After a job completes, calibrate future requests with `seff <jobid>` or
   `sacct -j <jobid> --format=Elapsed,MaxRSS,State` — don't carry over oversized
   `--time`/`--mem` requests by habit.

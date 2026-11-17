@@ -1,3 +1,5 @@
-# Overleaf also reads this file. Build locally with: latexmk main.tex
+# Overleaf also reads this file. Build both reports locally with: latexmk
+# (or one of them: latexmk twostream_electron_electron.tex)
+@default_files = ('twostream_electron_electron.tex', 'twostream_electron_ion.tex');
 $pdf_mode = 1;
 $bibtex_use = 2;
