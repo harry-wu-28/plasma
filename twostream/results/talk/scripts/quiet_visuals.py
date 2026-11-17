@@ -8,7 +8,7 @@ slide_figures.py), from the quiet smoke run and the random-start baseline.
   phase_space_quiet.png            quiet-run phase space at three times
 
 Usage:
-    conda run -n analysis python twostream/analysis/quiet_visuals.py QUIET_RUN RANDOM_RUN --out DIR
+    conda run -n analysis python twostream/results/talk/scripts/quiet_visuals.py QUIET_RUN RANDOM_RUN --out DIR
 """
 
 import argparse
@@ -18,6 +18,7 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "analysis"))  # chen_ee, twostream_analysis
 import slide_figures as sf  # noqa: E402  (shared style)
 import chen_ee as ce  # noqa: E402
 import twostream_analysis as ta  # noqa: E402

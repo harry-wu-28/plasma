@@ -1,7 +1,7 @@
-// Builds talk/twostream_talk.pptx from talk/figures/*.png and the text in talk/content.md
+// Builds twostream/results/talk/twostream_talk.pptx from twostream/results/talk/figures/*.png and the text in twostream/results/talk/content.md
 // ("visualize the theory" framing, quiet-start figures: main slides 1-10, backup B1-B8).
-// Run from talk/:  node build_deck.js   (needs pptxgenjs; set NODE_PATH if it is installed elsewhere)
-// Re-run after any figure in talk/figures/ changes; images are re-read on every build.
+// Run from twostream/results/talk/:  node build_deck.js   (needs pptxgenjs; set NODE_PATH if it is installed elsewhere)
+// Re-run after any figure in twostream/results/talk/figures/ changes; images are re-read on every build.
 const fs = require("fs");
 const path = require("path");
 const pptxgen = require("pptxgenjs");
@@ -162,7 +162,7 @@ function badge(slide, x, y, d, n, fill, color) {
     align: "center", valign: "middle", margin: 0, isTextBox: true });
 }
 
-// ---- speaker notes: talk/content.md (quiet-start version) -------------------
+// ---- speaker notes: twostream/results/talk/content.md (quiet-start version) -------------------
 // Two runs: quiet start (job 11092712, to t ≈ 21/ω_p) gives slides 7-9, B4, B6;
 // random start (job 11088180, to t ≈ 70/ω_p) gives slide 6, B2, B3, B5.
 const NOTES = {

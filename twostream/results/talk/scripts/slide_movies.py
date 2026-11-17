@@ -7,8 +7,8 @@ slide_figures.py).
   spacetime_Ex_normalized.png  same, each time row divided by its own rms
 
 Usage:
-    conda run -n analysis python twostream/analysis/slide_movies.py \
-        /dartfs-hpc/scratch/f007hd2/twostream/cpu/twostream_baseline --out talk/figures
+    conda run -n analysis python twostream/results/talk/scripts/slide_movies.py \
+        /dartfs-hpc/scratch/f007hd2/twostream/cpu/twostream_baseline --out twostream/results/talk/figures
 """
 
 import argparse
@@ -18,6 +18,7 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "analysis"))  # chen_ee, twostream_analysis
 import slide_figures as sf  # noqa: E402  (sets the shared rcParams)
 import chen_ee as ce  # noqa: E402
 import twostream_analysis as ta  # noqa: E402

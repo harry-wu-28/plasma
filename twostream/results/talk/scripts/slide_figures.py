@@ -6,8 +6,8 @@ omega_p is the plasma frequency of all the electrons (Chen's notation).
 Colors everywhere: beam 1 (moving right) blue, beam 2 (moving left) red, theory black.
 
 Usage:
-    conda run -n analysis python twostream/analysis/slide_figures.py \
-        /dartfs-hpc/scratch/f007hd2/twostream/cpu/twostream_baseline --out talk/figures
+    conda run -n analysis python twostream/results/talk/scripts/slide_figures.py \
+        /dartfs-hpc/scratch/f007hd2/twostream/cpu/twostream_baseline --out twostream/results/talk/figures
 """
 
 import argparse
@@ -22,6 +22,7 @@ import numpy as np
 from adios2 import FileReader
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "analysis"))  # chen_ee, twostream_analysis
 import chen_ee as ce  # noqa: E402
 import twostream_analysis as ta  # noqa: E402
 

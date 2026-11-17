@@ -10,17 +10,30 @@ current filtering and shape order change the noise floor and numerical heating.
 ```
 pgens/streaming/pgen.hpp          verbatim copy of entity-toolkit/entity v1.3.3
                                   (tag v1.3.3 = 5bf97fd, sha256 28f7cc95...). Physics code: do not edit.
+pgens/streaming_quiet/pgen.hpp    copy with evenly spaced initial positions (quiet start; user-approved)
 twostream/
   scripts/build_twostream.sh      configure + build entity_s<N>.xc (N = shape order)
   scripts/bind_gpu.sh             rank -> GPU binding (copy of radiative/pp/scripts/)
-  analysis/twostream_analysis.py  gamma(k) fit, mode histories, energy, x-t, phase space
-  runs/baseline/
+  theory/chen_ee_derivation.md    Chen 6.6 algebra for two electron streams
+  analysis/                       run analysis (reads simulation output)
+    twostream_analysis.py         gamma(k) fit, mode histories, energy, x-t, phase space
+    chen_ee.py, chen_figures.py   Chen-style theory + comparison figures
+    buneman_analysis.py           electron-ion (Buneman) run
+    quiet_compare.py              quiet vs random start noise comparison
+  runs/baseline/                  random-start e-e run (CPU 11088180)
     inputs/twostream_baseline.toml   upstream twostream.toml, physics unchanged, I/O adjusted
-    scripts/gpu_twostream.sh         1 L40S, 1 rank
+    scripts/gpu_twostream.sh         1 L40S, 1 rank (cpu_twostream.sh: CPU)
+  runs/quiet/                     quiet-start runs (smoke 11092712, visual 11093069)
+  runs/buneman/                   electron beam through ions
   runs/scan/
     make_scan.py                     writes inputs/<tag>.toml + inputs/manifest.txt
     inputs/                          10 one-knob variants of the baseline
     scripts/gpu_twostream_scan.sh    SLURM array over manifest.txt
+  results/                        deliverables
+    talk/                         final-project deck (twostream_talk.pptx), content.md,
+                                  build_deck.js, assets/, figures/ (random_start/ = old versions)
+      scripts/                    slide/movie figure generators (write to ../figures)
+    report/                       LaTeX reports (e-e, e-i) + PDFs, refs.bib, latexmkrc
 ```
 
 Output goes to `/dartfs-hpc/scratch/f007hd2/twostream/<simulation.name>/`.
@@ -145,7 +158,7 @@ Solving Chen Eq. 6.30, `1 = ω_pi²/ω² + ω_pe²/(ω − k v0)²`, numerically
 quotes the small-ω approximation (√3/2)(m/2M)^{1/3} ω_pe = 0.0561 ω_pe, which is 3% high.
 With ω_pe = 0.1 and L = 100: box mode m = 16 sits on the peak, m ≤ 17 are unstable, the
 e-folding time is ≈184, and the run (t = 4000) covers ≈22 e-folds. The report is
-`paper/twostream_electron_ion.tex`.
+`results/report/twostream_electron_ion.tex`.
 
 **Setup (`runs/buneman/`).** The input uses the unmodified streaming pgen: species 1 = e⁻
 (u0 = 0.1), 2 = mobile ions (M/m = 1836), 3 = rigid return current (m = 1e8, +q, u0 = 0.1),
@@ -195,7 +208,7 @@ needs `-Ddeposit=esirkepov -Dshape_order=3`.
 **Honest per-wave uncertainty.** A single straight-line fit of ln|E_m| over t = 60–140 gives
 error bars of ~0.01 ω_p, which hide the real uncertainty. Fitting the same mode over 40-unit
 windows sliding across t = 40–160 (before saturation at t ≈ 180) moves the rate by ±0.06–0.19
-ω_p (25–50% of theory). `analysis/slide_figures.py` plots the median over those windows with
+ω_p (25–50% of theory). `results/talk/scripts/slide_figures.py` plots the median over those windows with
 the window spread as the error bar. For the resolved waves m = 4–9 the median/theory ratios
 are 0.85, 0.96, 0.93, 1.01, 1.23, 0.98, so the **mean ratio is 0.99 ± 0.16** (± from
 propagating each wave's window spread; the six ratios alone give SE 0.05, but the windows
