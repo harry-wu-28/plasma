@@ -167,8 +167,9 @@ That splits it into individual waves, and I follow the amplitude of each one ove
 plot is the wave closest to the fastest-growing one. The vertical axis is logarithmic, so
 exponential growth shows up as a straight line. The dashed line is Chen's prediction. I didn't
 fit it to the data; I just started it at the same point and let it run with the theoretical
-slope. In the shaded region the simulation follows it closely. Before that, the field is
-still settling down from the random starting noise. After about 13 over ω_p, the wave stops
+slope. In the shaded region the simulation follows it, but notice how short that region is:
+the wave grows by only about 3 e-folds before it stops. Before that, the field is still
+settling down from the random starting noise. After about 13 over ω_p, the wave stops
 growing, because it has trapped the electrons, as in the vortices on the previous slide.
 
 ---
@@ -177,21 +178,23 @@ growing, because it has trapped the electrons, as in the vortices on the previou
 
 **Bullets**
 - Each dot: the measured growth rate of one wave in the box
-- Fastest wave: simulation 0.352 ± 0.007 ω_p vs. theory 0.354 ω_p
-- Measured at kv₀/ω_p = 0.624 (the box wave closest to the theory peak at 0.612)
-- Away from the peak, the points scatter by roughly ±20%
+- Fastest wave (m=7): simulation 0.36 ± 0.12 ω_p vs. theory 0.354 ω_p
+- Averaged over the well-resolved waves m=4–9: simulation/theory = 0.99 ± 0.16
+- Individual waves scatter ~±30% (random-noise start, only ~3 e-folds of growth)
 
 **Figure:** `growth_rate_vs_k.png`
 
 **Speaker notes**
 Now I do the same measurement for every wave the box allows and compare to the full theory
-curve. The black curve is Chen's prediction, and the dots are the simulation. The key result
-is the fastest wave. The simulation gives 0.352 times ω_p, and theory says 0.354. That's less
-than 1% off. Because the box is periodic, only certain wavelengths fit, so the closest one is
-at 0.624 instead of exactly 0.612. Away from the peak the agreement is rougher, about plus or
-minus 20%. The points at the far edges, the very long and very short waves, don't match well.
-Those waves grow slowly, so they're buried in noise and get pushed around by the fast waves
-before they can show clean growth.
+curve. The black curve is Chen's prediction, and the dots are the simulation. For the fastest
+wave, the simulation gives 0.36 times ω_p, and theory says 0.354. But the uncertainty is big,
+plus or minus 0.12, because the answer changes depending on exactly which stretch of time I
+fit. If I average over the waves that are well resolved, the middle of the band from m equals
+4 to 9, the ratio of simulation to theory comes out at 0.99 plus or minus 0.16. So on average the
+simulation agrees with Chen. Individual waves scatter by around 30 percent. That's because
+the run starts from random particle noise, with no wave put in by hand, and the fastest wave
+grows only about 3 e-folds before it saturates, so there's very little clean growth to
+measure. The points at the far edges don't tell us much.
 
 ---
 
@@ -218,20 +221,21 @@ the picture Chen sketches in Figure 7.19, and the simulation reproduces it.
 ## Slide 10: Limits of PIC, and conclusion
 
 **Bullets**
-- PIC reproduces Chen: fastest growth rate within 1%, trapping, and the plateau
-- Limit 1: few particles → noisy start → short clean growth window
+- PIC reproduces Chen: growth rates agree on average (m=4–9: simulation/theory = 0.99 ± 0.16), plus trapping and the plateau
+- Limit 1: random-noise start → only ~3 e-folds of growth → individual waves scatter ~±30%
 - Limit 2: slow-growing waves are hard to measure; only waves that fit the box exist
 - Energy is conserved to better than 1 part in 100,000 over the run
 
 **Figure:** none, or repeat the growth-rate plot small
 
 **Speaker notes**
-To sum up: a particle-in-cell simulation reproduces the textbook two-stream instability. The
-fastest growth rate matches to better than 1%, the wave doesn't oscillate, just as theory
-predicts, and the nonlinear stage shows the trapping and plateau that Chen describes. There are
-limits. With only four particles per cell per beam, the starting noise is large, so the wave
-has only a short window of clean exponential growth before it saturates. That's why the
-slow-growing waves are hard to measure. Also, a periodic box only allows certain wavelengths.
+To sum up: a particle-in-cell simulation reproduces the textbook two-stream instability. On
+average the growth rates agree with Chen, the wave doesn't oscillate, just as theory predicts,
+and the nonlinear stage shows the trapping and plateau that Chen describes. There are limits.
+The run starts from random particle noise, and with only four particles per cell per beam that
+noise is large, so the fastest wave grows only about 3 e-folds before it saturates. That's why
+any single wave's growth rate is uncertain by about 30 percent, and why the slow-growing waves
+are hard to measure. Also, a periodic box only allows certain wavelengths.
 And PIC isn't perfect at conserving energy, though here the total energy stayed constant to
 better than one part in 100,000. Thank you, and I'm happy to take questions.
 
@@ -260,15 +264,19 @@ predicts. So the electrons stop the growth by getting trapped, just as the theor
 
 **Q1. Why is the simulation noisy, and how does that depend on the number of particles?**
 Each cell holds only a few particles at random positions, so the count in a cell fluctuates by
-about √N. The relative noise is about 1/√N, here 1/√4 = 50% per beam per cell. More particles
-would give a quieter start, a longer window of clean growth, and better measurements of the
-slow waves. The cost is that the run takes proportionally longer.
+about √N. The relative noise is about 1/√N, here 1/√4 = 50% per beam per cell. That large
+starting noise means the fastest wave grows only about 3 e-folds before saturating, which is
+why single-wave growth rates scatter by about ±30%. More particles would give a quieter start,
+a longer window of clean growth, and better measurements. The cost is that the run takes proportionally longer.
 
 **Q2. Why did you fit only between t ≈ 4 and 10/ω_p?**
 Before about 4/ω_p, the field is still settling from the random starting positions, and all
 waves jump to a noise level. After about 10/ω_p, the wave is big enough that nonlinear effects
 (trapping, waves interacting) bend the curve over. The straight-line exponential stage is in
-between. In code units the window is t = 60–140, and saturation is at t = 188.
+between. In code units the window is t = 60–140, and saturation is at t = 188. Because that
+stage is so short, the answer depends on the exact window: moving it anywhere within
+t = 40–160 changes a single wave's γ by 0.06–0.19 ω_p. That window-to-window spread is the
+± 0.12 ω_p I quote for the fastest wave.
 
 **Q3. Why is the real part of the frequency zero, so the wave doesn't move?**
 The two beams are identical except for direction, so the setup has no preferred direction and
@@ -296,12 +304,20 @@ the code it needs an extra trick, a fixed "return current", to keep the beam fro
 back by its own current. I have that run going, but it isn't part of this talk.
 
 **Q7. Why do the points at the edges of the γ(k) plot disagree?**
-Those waves grow slowly, so in the short time before saturation they barely rise above the
-noise. They also get driven by the strongly growing waves near the peak (nonlinear mode
-coupling). Their measured "growth" reflects noise and coupling more than their own linear
-growth.
+The longest waves (m=1–3) grow so slowly that in the short time before saturation they barely
+rise above the noise, so their fits are uninformative. The wave near the cutoff (m=11) sits
+high because it is driven by the strongly growing waves near the peak (nonlinear mode
+coupling), not by its own linear growth. That's why I average only over m=4–9.
 
 **Q8. How do you know the simulation isn't just heating up artificially?**
 Two checks. The grid resolves the Debye length well (about 17 cells per Debye length), so the
 known grid-heating instability shouldn't occur. And the total energy (particles plus field)
 stays constant to better than 1 part in 100,000 over the whole run.
+
+**Q9. How would you get a more precise number?**
+Seed the wave, or average several runs with different random seeds. Seeding means starting
+with a small, clean sine-wave ripple instead of random noise, so the wave grows for many more
+e-folds before it saturates. Averaging runs with different random starting positions beats
+down the run-to-run scatter by about 1/√(number of runs). Both would need small code changes
+in Entity: the setup only loads uniform beams, and the random seed is fixed in the code rather
+than set in the input file.
