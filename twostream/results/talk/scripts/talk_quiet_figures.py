@@ -46,9 +46,15 @@ def main():
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--quiet-window", nargs=2, type=float, default=(115.0, 280.0))
     ap.add_argument("--random-window", nargs=2, type=float, default=(40.0, 160.0))
+    ap.add_argument("--tmax", type=float, default=None,
+                    help="cut the quiet run at this code time and mark it as saturation")
     a = ap.parse_args()
     a.out.mkdir(parents=True, exist_ok=True)
     Q, R = qv.load(a.quiet), qv.load(a.random)
+    if a.tmax is not None:
+        keep = Q["t"] <= a.tmax
+        for key in ("t", "Ek", "E"):
+            Q[key] = Q[key][keep]
     ee, wp = Q["ee"], Q["ee"].wp
     w0, w1 = a.quiet_window
     starts = np.arange(w0, w1 - qv.WIN + 1, 4.0)
@@ -69,14 +75,16 @@ def main():
     win = (Q["t"] >= w0) & (Q["t"] <= w1)
     re_w = [abs(ce.linfit(Q["t"][win], -np.unwrap(np.angle(Q["Ek"][win, m])))[0]) / wp for m in band[core]]
     t0 = int(np.argmin(np.abs(Q["t"] - w0)))
-    efolds_7 = np.log(np.abs(Q["Ek"][-1, 7]) / np.abs(Q["Ek"][t0, 7]))
+    t1i = int(np.argmin(np.abs(Q["t"] - w1))) if a.tmax is not None else len(Q["t"]) - 1
+    efolds_7 = np.log(np.abs(Q["Ek"][t1i, 7]) / np.abs(Q["Ek"][t0, 7]))
     print(f"slow growers (theory < {MIN_EFOLDS:.0f} e-folds over t={w0:.0f}-{w1:.0f}): m = {band[~clean].tolist()}")
     print(f"m=7: γ = {gQ[i7]:.3f} ± {eQ[i7]:.3f} ω_p   (theory {1/(2*np.sqrt(2)):.3f})")
     print(f"m=4-9 mean ratio = {ratio.mean():.2f} ± {err_cons:.2f} (conservative, propagated window spreads); "
           f"ratio scatter SE = {ratio.std(ddof=1)/np.sqrt(core.sum()):.2f}")
     print(f"median window spread m=4-9 = {np.median(eQ[core] / gth[core]):.2f} of theory")
-    print(f"clean growth of m=7: {Q['t'][t0]*wp:.1f} -> {Q['t'][-1]*wp:.1f}/ω_p = {efolds_7:.1f} e-folds "
-          f"(amplitude x{np.exp(efolds_7):.0f}), still growing at the end")
+    print(f"clean growth of m=7: {Q['t'][t0]*wp:.1f} -> {Q['t'][t1i]*wp:.1f}/ω_p = {efolds_7:.1f} e-folds "
+          f"(amplitude x{np.exp(efolds_7):.0f})"
+          + (f"; saturation at {Q['t'][-1]*wp:.1f}/ω_p" if a.tmax is not None else ", still growing at the end"))
     print(f"|Re ω| over the window, m=4-9: max {max(re_w):.3f} ω_p (beam Doppler kv0 = "
           f"{yb[core].min():.2f}-{yb[core].max():.2f} ω_p)")
     for m, y_, g, e, t_ in zip(band, yb, gQ, eQ, gth):
@@ -103,13 +111,19 @@ def main():
     # ------------------------------------------------ 2. fastest mode
     fig, ax = plt.subplots(figsize=sf.SIZE)
     t = Q["t"]
-    tp = t[t >= t[t0]]
-    ax.axvspan(w0 * wp, t[-1] * wp, color="0.92", zorder=0)
+    t_line_end = w1 + 40.0 if a.tmax is not None else t[-1]
+    tp = t[(t >= t[t0]) & (t <= t_line_end)]
+    ax.axvspan(w0 * wp, (w1 if a.tmax is not None else t[-1]) * wp, color="0.92", zorder=0)
     ax.semilogy(t * wp, np.abs(Q["Ek"][:, 7]), color=sf.BEAM1, label="simulation")
     ax.semilogy(tp * wp, np.abs(Q["Ek"][t0, 7]) * np.exp(ee.gamma(Q["k"][7]) * (tp - t[t0])), "--",
                 color=sf.THEORY, label="theory  $e^{\\gamma t}$  (no fitting)")
-    ax.text(t[-1] * wp - 0.3, 3e-5, "still growing\nwhen the run ends", ha="right", va="bottom",
-            fontsize=14, color="0.35")
+    if a.tmax is not None:
+        ax.axvline(t[-1] * wp, color="k", ls="--", lw=1.2)
+        ax.text(t[-1] * wp - 0.3, 3e-5, "growth stops\n(saturation)", ha="right", va="bottom",
+                fontsize=14, color="0.2")
+    else:
+        ax.text(t[-1] * wp - 0.3, 3e-5, "still growing\nwhen the run ends", ha="right", va="bottom",
+                fontsize=14, color="0.35")
     ax.set_xlabel("time (1/ω$_p$)")
     ax.set_ylabel("wave amplitude\n(code units, log scale)")
     ax.set_ylim(1e-5, 1.0)
@@ -136,6 +150,10 @@ def main():
         ax.set_ylabel("time (1/ω$_p$)")
         cb = fig.colorbar(im, ax=ax, pad=0.02)
         cb.set_label(label, fontsize=16)
+        if a.tmax is not None:
+            ax.axhline(t[-1] * wp, color="k", ls="--", lw=1.2)
+            ax.text(ext[1] - 0.05, t[-1] * wp - 0.3, "growth stops (saturation)", ha="right", va="top",
+                    fontsize=16, bbox=dict(facecolor="white", edgecolor="none", alpha=0.85, pad=2))
         fig.tight_layout()
         sf.save(fig, a.out, name)
 

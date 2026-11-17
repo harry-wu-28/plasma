@@ -8,12 +8,15 @@ wave traces out Chen's curve. The goal is to visualize the physics, not to run a
 B1–B8, then likely Q&A. Figures are in `twostream/results/talk/figures/` (random-start versions in
 `twostream/results/talk/figures/random_start/`).
 
-**Two runs, same grid and particle count (ppc0 = 16):**
-- *Quiet start* (job 11092712, `pgens/streaming_quiet`, to t ≈ 21/ω_p): particles start evenly
-  spaced. It gives the growth, space-time and γ(k) figures (slides 7–9, B4, B6).
-- *Random start* (baseline, CPU job 11088180, to t ≈ 70/ω_p): particles start at random positions.
-  It gives the phase-space video, trapping and f(v) figures (slide 6, B2, B3) and the "before"
-  numbers (B5).
+**Two runs, same grid:**
+- *Quiet start* (job 11093069, `pgens/streaming_quiet`, ppc0 = 64 = 16 per cell per beam,
+  245,760 steps; figures cut at saturation, t ≈ 26.8/ω_p): particles start evenly spaced. It gives
+  the growth, space-time and γ(k) figures (slides 7–9, B4, B6).
+- *Random start* (baseline, CPU job 11088180, ppc0 = 16 = 4 per cell per beam, to t ≈ 70/ω_p):
+  particles start at random positions. It gives the phase-space video, trapping and f(v) figures
+  (slide 6, B2, B3) and the "before" numbers (B5).
+- The 28× noise reduction was measured in a short test (smoke job 11092712) comparing quiet and
+  random starts at the *same* particle count (ppc0 = 16). The smoke run is not otherwise used.
 
 **Units on every slide (same as Chen and the figures):** ω_p is the plasma frequency of *all*
 the electrons (both beams together). Wavenumber is written as kv₀/ω_p, time as t in 1/ω_p.
@@ -101,8 +104,9 @@ turned into electric current on the nearby grid points. Second, field solve: the
 that current to update the electric field on the grid. Third, interpolate: it reads the field
 back at each particle's position, so every particle knows what force it feels. Fourth, push:
 Newton's law gives each particle a new velocity and position. Then it starts over. Each step
-is a tiny slice of time, so the quiet-start run went around this loop about 75,000 times, which
-took about 13 minutes on 32 CPU cores. Nothing about the two-stream instability is built into these
+is a tiny slice of time, so my main run goes around this loop about 250,000 times, roughly an
+hour and a half on one 32-core node. (Approximate: the run was still finishing when this was
+written.) Nothing about the two-stream instability is built into these
 rules. If the instability shows up, it comes from the particles and fields alone.
 
 ---
@@ -121,7 +125,7 @@ rules. If the instability shows up, it comes from the particles and fields alone
 | Beams | 2 electron beams, ±0.1c, equal density; thermal spread 0.01c |
 | Box | length ≈ 7 c/ω_p, holds ~7 wavelengths of the fastest wave |
 | Grid | 12,288 cells; Debye length ≈ 17 cells |
-| Particles | 4 per cell per beam (~49,000 per beam) |
+| Particles | quiet start: 16 per cell per beam (~197,000 per beam); random start: 4 per cell per beam |
 | Time step and numerics | ω_pΔt ≈ 3×10⁻⁴; Boris push, cloud-in-cell shape, zigzag current deposit |
 
 **Speaker notes**
@@ -133,7 +137,9 @@ whatever small unevenness the particles start with. I used two runs that differ 
 the particles start. In the random start they're placed at random, so some cells get a few
 more particles than others, and that makes lumps at every wavelength. In the quiet start
 they're evenly spaced, with each electron sitting on its positive partner, so the starting
-charge is almost perfectly smooth. That makes the starting noise about 28 times smaller.
+charge is almost perfectly smooth. In a test with the same number of particles, that made the
+starting noise about 28 times smaller. My main quiet-start run also uses four times as many
+particles, which quiets it a little more.
 
 ---
 
@@ -165,8 +171,8 @@ measure what you just saw.
 **Bullets**
 - Amplitude of the fastest-growing wave, on a log scale (quiet start)
 - Dashed line: Chen's growth rate, not fitted, only started at the same point
-- Follows the theory slope for about 4 e-folds, a factor of ~66
-- Still growing when the run ends at t ≈ 21/ω_p
+- Follows the theory slope for about 4.2 e-folds, a factor of ~70 (t ≈ 10 → 22.5/ω_p)
+- Then growth stops (saturation) at t ≈ 27/ω_p
 
 **Figure:** `growth_fastest_mode.png`
 
@@ -176,10 +182,11 @@ transform, and follow how strong one wave is over time. This is the wave closest
 fastest-growing one, from the quiet start. The vertical axis is logarithmic, so exponential
 growth shows up as a straight line. The dashed line is Chen's prediction. I didn't fit it; I
 just started it at the same point and gave it the theoretical slope. After the first few
-plasma periods, while the field settles, the simulation sits right on that line for about four
-e-folds, which is a factor of about 66. And it's still growing when the run ends. The wave
-hasn't yet become strong enough to trap the electrons, so everything here is the clean,
-linear growth the theory describes.
+plasma periods, while the field settles, the simulation sits right on that line from about 10
+to 22 over ω_p. That's about four e-folds, a factor of about 70. Then the curve bends over and
+flattens at about 27 over ω_p. That's saturation: the wave has become strong enough to trap
+the electrons, and the simple linear theory no longer applies. The straight stretch is the
+clean, linear growth the theory describes.
 
 ---
 
@@ -189,19 +196,20 @@ linear growth the theory describes.
 - Color = electric field (red and blue: opposite directions); position across, time up
 - Almost blank at first: the quiet start has very little noise
 - Stripes appear and darken, and they are vertical: the wave stays where it is
-- Measured real frequency |Re ω| ≤ 0.014 ω_p, essentially zero
+- Measured real frequency |Re ω| ≤ 0.024 ω_p, essentially zero
 
 **Figure:** `spacetime_Ex.png`
 
 **Speaker notes**
 This picture tests the second prediction. Position is across, time goes up, and color is the
 electric field: red points one way, blue the other. For the first ten or so units of time it's
-almost blank, because the quiet start begins with so little noise. Then red and blue stripes
+almost blank, because the quiet start begins with so little noise. The dashed line at the top
+marks saturation. Then red and blue stripes
 appear and get darker as they grow. Now look at the direction of the stripes. They go
 straight up. A stripe that stays at the same position as time goes on is a wave that isn't
 moving. If the wave traveled, the stripes would tilt to one side. This is what Re ω equals
 zero means: the wave grows where it is. Measuring it directly, the real part of the frequency
-is at most 0.014 times ω_p, which is essentially zero.
+is at most 0.024 times ω_p, which is essentially zero.
 
 ---
 
@@ -209,22 +217,22 @@ is at most 0.014 times ω_p, which is essentially zero.
 
 **Bullets**
 - Black: Chen's growth rate for each wavelength; blue: one measured wave each
-- Fastest wave (m=7): 0.342 ± 0.024 ω_p vs. theory 0.354 ω_p
-- Waves m=4–9: simulation/theory = 0.99 ± 0.06; typical spread 15%
-- Grey: slow growers (the longest waves and those near the cutoff) stay close to the noise
+- Fastest wave (m=7): 0.339 ± 0.014 ω_p vs. theory 0.354 ω_p
+- Seven waves land on the curve; m=4–9: simulation/theory = 0.96 ± 0.04, typical spread 9%
+- Grey: slow growers (the three longest waves and the one nearest the cutoff) stay close to the noise
 
 **Figure:** `growth_rate_vs_k.png`
 
 **Speaker notes**
 This is my favorite result. I measured the growth rate of every wave that fits in the box and
 put them on top of Chen's curve. The black curve is the theory, and each blue dot is one wave
-from the quiet-start simulation. The dots trace out the shape of the curve: they rise, peak
-near 0.6, and fall again. The fastest wave grows at 0.342 times ω_p, against 0.354 from theory.
-Averaged over the six waves in the middle, simulation divided by theory is 0.99, plus or minus
-0.06. The grey points are the slow growers: the longest waves on the left, and the shortest
-ones near the cutoff on the right. Theory says they grow slowly, so by the end of the run they
-have barely risen above the noise, and the strong waves nearby push them around. That makes
-them hard to measure, and that's expected, not a failure.
+from the quiet-start simulation. Seven waves land on the curve: they rise, peak near 0.6, and
+fall again, just like the theory. The fastest wave grows at 0.339 times ω_p, against 0.354
+from theory. Averaged over the six waves in the middle, simulation divided by theory is 0.96,
+plus or minus 0.04, so the simulation runs about 4 percent slow. The grey points are the slow
+growers: the three longest waves on the left and the one nearest the cutoff on the right. They
+grow so slowly that they barely rise above the noise before the fast waves saturate, so they
+are hard to measure. That's expected, not a failure.
 
 ---
 
@@ -233,7 +241,7 @@ them hard to measure, and that's expected, not a failure.
 **Bullets**
 - A wave grew exponentially, along Chen's slope, out of a nearly smooth start
 - It grew in place, without traveling, as Re ω = 0 predicts
-- Each wavelength's growth rate traced out Chen's curve (0.99 ± 0.06)
+- Each wavelength's growth rate traced out Chen's curve (0.96 ± 0.04)
 - PIC lesson: where the particles start matters, and a quiet start made the physics clear
 
 **Figure:** none, or a small repeat of `growth_rate_vs_k.png`
@@ -247,8 +255,8 @@ simulations along the way is that where you place the particles at the start rea
 With random positions the noise was so loud that every measurement scattered by tens of
 percent. Spacing them evenly cut the noise about 28 times and made the theory curve stand out
 clearly. The one place it's still hard is the slow-growing waves, which barely rise above the
-noise in the time I ran. And the random-start run, which ran longer, showed what comes after
-the growth: the electrons get trapped in the wave and the beams mix. Thank you, and I'm happy
+noise before the fast waves saturate. And the random-start run showed what comes after the
+growth: the electrons get trapped in the wave and the beams mix. Thank you, and I'm happy
 to take questions.
 
 ---
@@ -314,21 +322,22 @@ two beams is gone, which is the flattening Chen sketches in Figure 7.19.
 **Bullets**
 - Random positions → cell-to-cell counting noise at every wavelength (~1/√N)
 - Evenly spaced positions, each electron on its positive partner → almost no starting charge
-- Starting noise 28× lower → about 3.3 more clean e-folds
-- Result: quiet-start growth rates follow Chen's curve (m=4–9: 0.99 ± 0.06, spread 15%)
+- Same particle count (test run): starting noise 28× lower → about 3.3 more clean e-folds
+- Main quiet run (also 4× more particles): seven waves on Chen's curve (m=4–9: 0.96 ± 0.04, spread 9%)
 
 **Figure:** `gamma_k_quiet_vs_random.png` (quiet-start points with Chen's curve)
 
 **Speaker notes**
-The same beams, grid, and number of particles can give a clear picture or a blurry one,
-depending only on where the particles start. With random positions, some cells get more
+The same beams and grid can give a clear picture or a blurry one, depending on where the
+particles start. With random positions, some cells get more
 particles than others by chance, which seeds every wavelength with a fairly large ripple. In my
 first run that left only about three e-folds of growth, and single waves scattered by about
 30 percent, although the average still came out at 0.99 plus or minus 0.16. With evenly spaced
 positions, and each electron sitting on its positive partner, the starting charge is nearly
 zero everywhere. The velocities are still random, so some noise creeps back in, but the
-effective seed is about 28 times smaller. That buys about 3.3 extra e-folds of clean growth,
-and the measured growth rates settle onto Chen's curve, as this plot shows. Same physics, much
+effective seed is about 28 times smaller, in a test with the same number of particles. That
+buys about 3.3 extra e-folds of clean growth. My main quiet run also has four times as many
+particles, and its growth rates settle onto Chen's curve, as this plot shows. Same physics, much
 clearer picture.
 
 ---
@@ -377,7 +386,7 @@ out their positions early on and stay there.
 - Random-start run: total energy constant to better than 1 part in 100,000
 
 **Speaker notes**
-These are the settings behind both runs. The time step is set by the speed of light, because
+These are the settings behind both runs; only the starting positions and particle count differ. The time step is set by the speed of light, because
 Entity solves the full Maxwell equations, and it ends up far smaller than the plasma needs. The
 grid is fine enough to avoid the artificial heating that coarse grids cause.
 
@@ -408,30 +417,30 @@ electron on its positive partner, makes the starting charge nearly zero. The vel
 still random, so some noise comes back, but the effective seed is about 28 times lower.
 
 **Q2. Isn't the quiet start cheating?**
-No. The physics (beams, speeds, temperature, grid, number of particles) is identical. It only
+No. The physics (beams, speeds, temperature, grid) is identical. It only
 removes counting noise that is much larger than in a real plasma, because a real plasma has
 vastly more particles per cell. The instability still has to grow on its own, and it is not
 told which wavelength to pick.
 
 **Q3. How did you measure the growth rate, and where do the error bars come from?**
 For each wave, I fit straight lines to the log of its amplitude over many short windows
-sliding across t ≈ 8–20/ω_p, and take the median. The error bar is the spread between
+sliding across the straight part (t ≈ 10–22.5/ω_p), and take the median. The error bar is the spread between
 windows, so it shows how much the answer depends on which stretch of time I pick.
 
 **Q4. Why does the wave stay in place (Re ω = 0)?**
 The two beams are identical except for direction, so there's no preferred direction for the
 wave to move. Mathematically the growing root is purely imaginary. In the quiet-start run the
-measured real frequency is at most 0.014 ω_p.
+measured real frequency is at most 0.024 ω_p.
 
 **Q5. Why are the grey points (slow growers) so uncertain?**
-Theory says the longest waves (m=1–3) and the waves near the cutoff (m=10–11) grow slowly. By
-the end of the run they have barely risen above the noise, and the strongly growing waves near
-the peak also push them around. So their fits are noisy, even with the quiet start.
+Theory says the longest waves (m=1–3) and the wave nearest the cutoff (m=11) grow slowly.
+Before the fast waves saturate, they have barely risen above the noise, and the strongly growing
+waves near the peak also push them around. So their fits are noisy, even with the quiet start.
 
-**Q6. Why does the quiet-start run end before the wave saturates?**
-It was a short test run, to t ≈ 21/ω_p. With less noise the wave starts smaller and needs
-longer to saturate, about 22–25/ω_p. Everything on slides 7–9 is in the clean linear stage,
-which is what the theory describes. The random-start run shows what happens after.
+**Q6. (If asked) Why is the measured growth about 4% below theory?**
+Chen's formula assumes perfectly cold beams. My beams have a small thermal spread, 10% of the
+beam speed, and warmth smears out the bunching and slows the growth a little. That's the most
+plausible reason, though I haven't verified it separately, for example with a colder run.
 
 **Q7. How did you choose the time step?**
 Entity solves the full Maxwell equations, so light must not cross more than one cell per step.
