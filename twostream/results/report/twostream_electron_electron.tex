@@ -1,8 +1,7 @@
 % Electron-electron two-stream instability visualized with a PIC simulation -- final report
 % Builds on Overleaf as-is (pdfLaTeX + BibTeX), or locally with
 % `latexmk twostream_electron_electron.tex`. Companion: twostream_electron_ion.tex.
-% Missing figures render as labelled placeholder boxes; see figures/README.md.
-% Audience: an undergraduate taking a first course in plasma physics.
+% Figures live in figures/ (copies of the talk figures, prefix ee_).
 \documentclass[10pt,twocolumn,letterpaper]{article}
 
 \usepackage[letterpaper,margin=0.75in,columnsep=0.25in]{geometry}
@@ -11,31 +10,15 @@
 \usepackage{lmodern}
 \usepackage{microtype}
 \usepackage{amsmath,amssymb}
-\usepackage{bm}
 \usepackage{graphicx}
 \usepackage{xcolor}
 \usepackage{booktabs}
-\usepackage{siunitx}
 \usepackage[font=small,labelfont=bf]{caption}
 \usepackage[numbers,sort&compress]{natbib}
 \usepackage[colorlinks=true,allcolors=blue!50!black]{hyperref}
 
-% ---- Notation -------------------------------------------------------------
-\newcommand{\wb}{\omega_b}            % beam plasma frequency
-\newcommand{\wpe}{\omega_{p}}         % total plasma frequency, wpe^2 = 2 wb^2
-\newcommand{\vz}{v_0}                 % beam drift speed
-\newcommand{\ppc}{N_\mathrm{ppc}}     % particles per cell
-\newcommand{\dd}{\mathrm{d}}
-
-% ---- Figure placeholder: \figorbox{file}{width}{label shown while missing} --
-\newcommand{\figorbox}[3]{%
-  \IfFileExists{figures/#1}%
-    {\includegraphics[width=#2]{figures/#1}}%
-    {\fbox{\parbox[c][0.55#2][c]{\dimexpr#2-2\fboxsep-2\fboxrule\relax}{\centering\small\textit{Placeholder:}\\ #3\\ \texttt{figures/\detokenize{#1}}}}}}
-
-% ---- Margin notes for drafting (set \drafttrue -> \draftfalse to hide) -----
-\newif\ifdraft \drafttrue
-\newcommand{\todo}[1]{\ifdraft{\color{red}\textbf{[TODO:} #1\textbf{]}}\fi}
+\newcommand{\wpe}{\omega_{p}}   % plasma frequency of all the electrons
+\newcommand{\vz}{v_0}           % beam speed
 
 \title{\vspace{-1.5em}Watching the Electron Two-Stream Instability Grow\\
        in a Particle-in-Cell Simulation}
@@ -47,253 +30,176 @@
 
 \begin{abstract}
 \noindent
-When two electron beams pass through each other, a small density ripple can grow exponentially
-into a large electric wave: the two-stream instability. For cold, equal beams, theory predicts
-the growth rate exactly, with maximum $\gamma_{\max}=\wb/2$, where $\wb$ is one beam's plasma
-frequency, and it predicts that the growing wave does not travel. We use the particle-in-cell
-(PIC) code \textsc{Entity} to watch this theory happen. With no wave put in by hand, a wave
-grows exponentially and stays in place, as predicted, and the growth rates of the individual
-waves trace out the theory curve: averaged over the well-resolved waves, the ratio of measured
-to predicted growth rate is $0.96\pm0.04$. A ``quiet start'', with the particles evenly spaced
-instead of placed at random, makes this clear by greatly lowering the starting noise. The
-goal is to visualize the physics, not to run a precision test.
+Two electron beams moving through each other are unstable: a small ripple in the density grows
+exponentially into a big electric wave. Chen's cold-fluid theory says how fast each wavelength
+grows and that the growing wave does not move. We ran this setup in the particle-in-cell (PIC)
+code \textsc{Entity} and looked at what happens. The wave grows exponentially at close to the
+predicted rate, it stays in place, and the measured growth rates follow the theory curve (on
+average $0.96\pm0.04$ of the prediction). The point is to see the theory in action, not to make a
+precision measurement.
 \end{abstract}
 
 % ===========================================================================
 \section{Introduction}
-\label{sec:intro}
 
-Picture two streams of electrons moving through each other in opposite directions over a
-neutralizing ion background. Suppose a small density ripple appears. Its electric field speeds
-up some electrons and slows others, so they bunch up further where the density was already high.
-More bunching gives a stronger field, which gives more bunching, and the ripple grows
-exponentially until the wave is strong enough to trap electrons in its potential
-wells~\citep{BohmGross1949,Chen2016}. A disturbance that grows on its own like this is an
-\emph{instability}.
+Take two streams of electrons going opposite directions, with a fixed positive background so
+the plasma is neutral. If there is a small bump in the density, it makes an electric field. The
+field speeds up some electrons and slows down others, so they bunch up more, which makes the
+field stronger, and so on. The bump grows exponentially until the wave gets strong enough to trap
+electrons~\citep{BohmGross1949,Chen2016}. This is the two-stream instability.
 
-For cold beams (all electrons in a beam share one velocity) of equal density, the theory can be
-solved exactly. It predicts how fast each wavelength grows, and that the growing wave stands
-still. Equations alone do not show what this looks like, so here we use a computer simulation as
-a camera~\citep{BirdsallLangdon1991}. A particle-in-cell (PIC) code follows a smaller number of
-``macroparticles'' than a real plasma has and computes the field on a grid. These shortcuts make
-the simulation noisy, and a grid that is too coarse can artificially heat the
-plasma~\citep{Langdon1970,Okuda1972}, so we expect the simulation to follow the theory only
-within its noise. Our aim is to see the two predictions, exponential growth and a wave that
-grows in place, emerge on their own from the particles and fields.
+We solved this on paper in class. In this project we used a simulation to actually watch it
+happen and check that it looks the way the theory says.
 
 % ===========================================================================
-\section{Linear theory}
-\label{sec:theory}
+\section{Theory}
 
-Two cold electron beams, each of density $n_b$, move along $x$ at $\pm\vz$ through a fixed,
-uniform ion background. Each beam has plasma frequency $\wb^2 = n_b e^2/(\varepsilon_0 m_e)$,
-the frequency at which its electrons would oscillate on their own; for all electrons together
-$\wpe^2=2\wb^2$. Treating each beam $j$ as a fluid, the continuity equation, Newton's second law,
-and Gauss's law are
-\begin{gather}
-  \partial_t n_j + \partial_x (n_j v_j) = 0, \qquad
-  m_e(\partial_t v_j + v_j\partial_x v_j) = -eE, \nonumber\\
-  \varepsilon_0\,\partial_x E = -e\,(n_1 + n_2 - 2n_b).
-\end{gather}
-We write each quantity as its uniform value plus a small ripple, e.g.\
-$n_j = n_b + \tilde n_j\, e^{i(kx-\omega t)}$, and keep only first-order terms. A beam moving
-at $v_{0j}=\pm\vz$ sees the wave at the Doppler-shifted frequency $\omega - k v_{0j}$, and
+Each beam has density $n_0/2$ and speed $\pm\vz$. Let $\wpe^2=n_0e^2/(\varepsilon_0 m)$ be the
+plasma frequency of all the electrons. Linearizing the cold-fluid equations for each beam and
+plugging into Gauss's law gives the dispersion relation~\citep{Chen2016}
 \begin{equation}
-  \tilde v_j = \frac{-ie\tilde E}{m_e(\omega - k v_{0j})}, \qquad
-  \tilde n_j = \frac{k n_b\,\tilde v_j}{\omega - k v_{0j}}.
-\end{equation}
-Putting both $\tilde n_j$ into Gauss's law and dividing by $ik\tilde E$ gives the
-\emph{dispersion relation}, which says which $\omega$ go with each $k$:
-\begin{equation}
-  1 = \frac{\wb^2}{(\omega - k\vz)^2} + \frac{\wb^2}{(\omega + k\vz)^2}.
+  1 = \frac{\wpe^2}{2}\left[\frac{1}{(\omega - k\vz)^2} + \frac{1}{(\omega + k\vz)^2}\right].
   \label{eq:disp}
 \end{equation}
-This is a quadratic in $\omega^2$, with roots
-$\omega^2 = k^2\vz^2 + \wb^2 \pm \wb\sqrt{\wb^2 + 4k^2\vz^2}$. For $k\vz<\sqrt2\,\wb$ the minus
-root is negative, so $\omega = i\gamma$ and the ripple grows as $e^{\gamma t}$ with
+This is a quadratic in $\omega^2$. For $k\vz<\wpe$ one root is purely imaginary,
+$\omega=i\gamma$, so the wave grows like $e^{\gamma t}$ and does not travel
+($\mathrm{Re}\,\omega=0$). The growth rate is
 \begin{equation}
-  \gamma^2(k) = \wb\sqrt{\wb^2 + 4k^2\vz^2} - k^2\vz^2 - \wb^2 .
+  \frac{\gamma^2}{\wpe^2} = \frac12\sqrt{1+8y^2}-y^2-\frac12, \qquad y=\frac{k\vz}{\wpe},
   \label{eq:gamma}
 \end{equation}
-Shorter waves (larger $k$) do not grow. Setting $\dd\gamma^2/\dd(k^2)=0$ gives the
-fastest-growing wave,
-\begin{equation}
-  \gamma_{\max} = \tfrac{1}{2}\,\wb \quad\text{at}\quad k_{\max}\vz = \tfrac{\sqrt{3}}{2}\,\wb .
-  \label{eq:gmax}
-\end{equation}
-In one growth time $1/\gamma$ the amplitude grows by a factor $e$ (one ``$e$-folding'').
-Equation~\eqref{eq:gamma} is our reference curve. It holds only while the ripples are small
-(hence \emph{linear} theory); once the wave traps electrons, growth stops and the electrons
-form swirling vortices in phase space~\citep{BirdsallLangdon1991}.
+with a maximum of $\gamma_{\max}=\wpe/(2\sqrt2)\approx0.354\,\wpe$ at
+$k\vz=\sqrt{3/8}\,\wpe\approx0.61\,\wpe$. Figure~\ref{fig:disp} shows Chen's graphical way of
+seeing this: a short wave gives four real roots (no growth), and a long wave gives only two,
+so the other two must be complex.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\columnwidth]{figures/ee_dispersion_stable_unstable.png}
+  \caption{Right-hand side of Eq.~\eqref{eq:disp} vs.\ $\omega$. Left: short wave, four
+  crossings of 1, so four real roots and no growth. Right: longer wave, two crossings, so the
+  other two roots are complex and the wave grows.}
+  \label{fig:disp}
+\end{figure}
 
 % ===========================================================================
-\section{The particle-in-cell method}
-\label{sec:pic}
+\section{How the simulation works}
 
-\paragraph{Macroparticles and noise.}
-Each macroparticle stands for many real electrons, with their combined charge and mass. Its
-$q/m$ is the same as an electron's, so it follows the same path. Fields are stored on grid
-points spaced $\Delta x$ apart, with $\ppc$ particles per cell on average. With so few particles
-the density is noisy, $\delta n/n\sim\ppc^{-1/2}$. The noise conveniently supplies the initial
-ripple, but because growth starts from a larger amplitude, it saturates sooner and leaves fewer
-$e$-foldings to measure~\citep{BirdsallLangdon1991}.
-
-\paragraph{The PIC cycle.}
-Each time step $\Delta t$ has four stages~\citep{BirdsallLangdon1991,HockneyEastwood1988}:
-(1) \emph{gather} the field at each particle from nearby grid points; (2) \emph{push} the
-particles; (3) \emph{deposit} their current onto the grid; (4) \emph{solve} for the new fields.
-Steps 1 and 3 use a particle \emph{shape}. The simplest, nearest grid point, gives all of a
-particle's charge to the closest grid point. Cloud-in-cell splits it between the two nearest
-points according to distance, and higher orders spread it smoothly over three or four points.
-Smoother shapes average out more noise but cost more per particle. This run uses cloud-in-cell.
-
-\paragraph{Push.}
-\textsc{Entity} uses the Boris method~\citep{Boris1970}. With no magnetic field and motion only
-along $x$, it reduces to the \emph{leapfrog} scheme
-\begin{equation}
-  \begin{aligned}
-    v^{n+1/2} &= v^{n-1/2} + \tfrac{q}{m}E^{n}\Delta t,\\
-    x^{n+1} &= x^{n} + v^{n+1/2}\Delta t,
-  \end{aligned}
-\end{equation}
-with velocities offset by half a step from positions for extra accuracy. To follow the plasma
-oscillation the step must be short: leapfrog is stable for $\wpe\Delta t<2$ and accurate for
-$\wpe\Delta t\lesssim0.2$.
-
-\paragraph{Current and fields.}
-The current is deposited with the zigzag scheme~\citep{Umeda2003}, which conserves charge
-exactly, so Gauss's law
-stays satisfied automatically, and it is smoothed (\emph{filtered}) over neighboring cells to
-reduce noise. Fields are advanced on a staggered Yee grid~\citep{Yee1966}, which requires
-$c\Delta t<\Delta x$. In our 1D problem Amp\`ere's law reduces to
-$\partial_t E_x=-J_x/\varepsilon_0$, so the problem is effectively electrostatic.
-
-\paragraph{Numerical heating.}
-PIC codes do not conserve energy exactly. On a grid, waves whose wavenumbers differ by a
-multiple of $2\pi/\Delta x$ look identical at every grid point (\emph{aliasing}), so
-short-wavelength noise can pose as longer waves. When the Debye length is much smaller than a
-cell, $\lambda_D\ll\Delta x$, this heats the plasma until $\lambda_D\sim\Delta x$: the
-finite-grid instability~\citep{Langdon1970,Okuda1972}. Heating would matter here, because a
-velocity spread $v_{th}$ smears out the bunching and lowers $\gamma$ once $k v_{th}\sim\gamma$, so
-we choose a grid fine enough to avoid it (Sec.~\ref{sec:setup}).
+A PIC code can't follow every electron, so it uses ``macroparticles'' that each stand for many
+electrons (same charge-to-mass ratio, so they move the same way). The electric field is only
+stored on a grid. Every time step the code (1) deposits the particles' current on the grid,
+(2) updates the field, (3) interpolates the field back to each particle, and (4) pushes the
+particles with Newton's law~\citep{BirdsallLangdon1991}. \textsc{Entity}~\citep{Entity} uses the
+Boris pusher~\citep{Boris1970}, cloud-in-cell particle shapes, and a charge-conserving zigzag
+current deposit~\citep{Umeda2003}. Nothing about the instability is put in by hand.
 
 % ===========================================================================
-\section{Simulation setup}
-\label{sec:setup}
+\section{Setup}
 
-We use \textsc{Entity}~\citep{Entity} (v1.3.3, \texttt{streaming} problem generator, input
-\texttt{twostream.toml}) in 1D with periodic boundaries. Code units have $c=1$ and a reference
-skin depth $d_0=c/\omega_{p0}=10$, so $\omega_{p0}=0.1$; the physics depends only on ratios such
-as $\gamma/\wb$. There are four species: the two electron beams, and two positron species that
-are never moved and act as the fixed ion background. The beams have four-velocity
-$u_x=\gamma_L v_x/c=\pm0.1$, where $\gamma_L\approx1$ is the Lorentz factor, so they are
-non-relativistic.
+The run is 1D and periodic. The beams move at $\pm0.1c$ (so $\vz\approx0.0995c$) and have a small
+thermal spread, $v_{th}=0.01c$. The positive background is made of particles that never move.
+Table~\ref{tab:params} lists the main numbers.
 
-The input \texttt{densities = [0.5, 0.5]} sets the density of each electron--positron pair, so
-$n_b=0.25\,n_0$ and $\wb=\omega_{p0}\sqrt{0.25}=0.05$. Equation~\eqref{eq:gmax} then predicts
-$\gamma_{\max}=0.025$ at $k_{\max}\approx0.435$ ($\lambda_{\max}\approx14.4$). A periodic box
-of length $L=100$ allows only $k=2\pi m/L$; the $m=7$ mode has $k\vz/\wb=0.875$, close to the
-peak at $0.866$. Table~\ref{tab:params} lists all parameters.
-
-\paragraph{Two runs.} The \emph{random-start} run places particles at random and lasts
-$\wb t=50$. Its counting noise is large, so the fastest wave grows only about 3 $e$-folds before
-it saturates; we use it to show the nonlinear stage. The growth-rate measurements come from a
-\emph{quiet-start} run that is identical except in two ways. The particles start evenly spaced
-in each cell, with each positron on top of its electron, so the charge density is exactly zero at
-$t=0$; velocities are still random Maxwellians (problem generator \texttt{streaming\_quiet}). It
-also has four times as many particles. The even spacing alone lowers the effective seed 28-fold
-(at equal particle count) and the extra particles a further 1.8-fold, 48-fold overall. In the
-quiet run
-the fastest wave saturates at $\wb t\approx19$ ($\wpe t\approx26.8$). The Debye length of
-all the electrons together is $\lambda_D=v_{th}/\wpe=0.14$, about 17 cells ($\Delta x/\lambda_D\approx0.06$),
-far from the regime $\lambda_D\ll\Delta x$ where finite-grid heating occurs.
-\todo{update if the production runs change any of these values.}
+We used two runs that are the same except for how the particles start. In the \emph{random
+start} the particles are placed randomly, which makes a lot of noise. In the \emph{quiet start}
+they are evenly spaced, with each positive particle on top of an electron, so the starting charge
+is basically zero (velocities are still random). The quiet run also has four times as many
+particles. Together this makes the starting noise about 48 times smaller (28 times from the even
+spacing and 1.8 times from the extra particles), so the wave gets about 4 more $e$-folds of clean
+growth. All the figures below come from the quiet start; the random start is only used for
+comparison.
 
 \begin{table}[t]
   \centering
-  \caption{Simulation parameters from \texttt{twostream.toml} in code units ($c=1$), with
-  dimensionless ratios on the right. Particle counts are random start/quiet start.}
+  \caption{Simulation parameters (code units, $c=1$). Particle counts are random start/quiet
+  start.}
   \label{tab:params}
   \small
-  \begin{tabular}{@{}lll@{}}
+  \begin{tabular}{@{}ll@{}}
     \toprule
-    Parameter & Value & Normalized \\
-    \midrule
-    Beam four-velocity $u_x$            & $\pm0.1$            & $\vz\approx0.0995\,c$ \\
-    Beam density $n_b$                  & $0.25\,n_0$         & $\wb=0.05$ \\
-    Temperature $T/m_ec^2$              & $10^{-4}$           & $v_{th}/\vz\approx0.1$ \\
-    Box length $L$                      & 100                 & $L\wb/\vz\approx50$ \\
-    Cells                               & 12288               & $\Delta x/\lambda_D\approx0.06$ \\
-    Time step (CFL $=0.5$)              & $\Delta t\approx0.0041$ & $\wb\Delta t\approx2\times10^{-4}$ \\
-    Particles per cell $\ppc$           & 16/64               & 4/16 per species \\
-    Current filter passes               & 4                   & \\
-    Run time                            & 1000                & $\wb t=50$ \\
-    Particle shape                      & cloud-in-cell       & first order \\
-    Pusher, deposit                     & Boris, zigzag       & \\
+    Beam speed            & $\pm0.1c$ \\
+    Thermal spread        & $v_{th}=0.01c$ \\
+    Plasma frequency      & $\wpe\approx0.070$ \\
+    Box length            & 100 ($\approx7\,c/\wpe$) \\
+    Grid cells            & 12288 \\
+    Cells per Debye length & $\approx17$ \\
+    Particles per cell (each beam) & 4 / 16 \\
+    Time step             & $\wpe\Delta t\approx3\times10^{-4}$ \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-\paragraph{Measuring $\gamma(k)$.}
-We Fourier transform $E_x(x,t)$ in $x$ to get the amplitude $|\tilde E_k(t)|$ of each box wave.
-During growth $|\tilde E_k|\propto e^{\gamma t}$, so $\ln|\tilde E_k|$ versus $t$ is a straight
-line of slope $\gamma(k)$. We fit it over many 40-unit windows sliding across the growth phase
-($\wpe t\approx9.8$--$22.5$ in the quiet run), take the median as $\gamma$, and the spread between
-windows as the uncertainty (Fig.~\ref{fig:growth}).
+% ===========================================================================
+\section{Results}
+
+\paragraph{What the electrons do.}
+Figure~\ref{fig:phase} shows the electrons in phase space (position vs.\ velocity). They start
+as two flat beams. During growth the beams get wavy, and a few $1/\wpe$ after saturation they
+have rolled up into vortices, which are electrons trapped in the wave.
 
 \begin{figure}[t]
   \centering
-  \figorbox{ee_growth_mode.pdf}{\columnwidth}{$\ln|\tilde E_k(t)|$ for $k\approx k_{\max}$, with fit}
-  \caption{Amplitude of the fastest-growing wave versus time (quiet start). Dashed: the theory
-  slope $e^{\gamma t}$, not fitted, started at the same point. The simulation follows it for about
-  4.2 $e$-folds (a factor of $\sim$70) before growth stops at saturation.}
+  \includegraphics[width=\columnwidth]{figures/ee_phase_space.png}
+  \caption{Phase space at $t=0$, 20 and $33/\wpe$: initial beams, linear growth, and trapped
+  vortices about $6/\wpe$ after saturation.}
+  \label{fig:phase}
+\end{figure}
+
+\paragraph{Exponential growth.}
+To get the growth of each wave we Fourier transform $E_x(x)$ and follow each mode's amplitude
+over time. Figure~\ref{fig:growth} shows the fastest one. The dashed line is the theory slope,
+not fitted, just started at the same point. The simulation follows it for about 4.2 $e$-folds
+(a factor of about 70) and then saturates at $t\approx27/\wpe$.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\columnwidth]{figures/ee_growth_fastest_mode.png}
+  \caption{Amplitude of the fastest-growing wave (quiet start) on a log scale. Dashed: theory
+  $e^{\gamma t}$, not fitted. Shaded: the part used for fitting.}
   \label{fig:growth}
 \end{figure}
 
-% ===========================================================================
-\section{Results}
-\label{sec:results}
-
-\paragraph{Growth rate versus wavenumber.}
-Figure~\ref{fig:gammak} compares the measured $\gamma(k)$ from the quiet-start run with
-Eq.~\eqref{eq:gamma}. For the fastest wave ($m=7$, $k\vz/\wb=0.875$) we measure
-$\gamma=0.48\pm0.02\,\wb$ ($0.339\pm0.014\,\wpe$), against the theory value $\wb/2$
-($0.354\,\wpe$). Seven waves ($m=4$--$10$) land on the curve. Averaged over $m=4$--$9$, the
-ratio of measured to theoretical growth rate is $0.96\pm0.04$ (conservative, since the waves
-share one noise realization), and the median spread of a single wave is 9\% of theory. The
-$\sim$4\% shortfall is plausibly the small beam temperature, which slows the growth slightly
-(not verified separately). The slow growers, the longest waves ($m=1$--$3$) and the one nearest
-the cutoff $k\vz=\sqrt2\,\wb$ ($m=11$), barely rise above the noise before the fast waves
-saturate, so their fits remain noisy.
-
-The random-start run gives the same average but far more scatter ($0.99\pm0.16$; single waves
-$\pm30\%$), because it has only about 3 $e$-folds of clean growth: where the particles start
-matters.
+\paragraph{The wave stays in place.}
+Figure~\ref{fig:st} plots $E_x$ against position and time. The stripes are vertical, so the
+wave is not moving, which is what $\mathrm{Re}\,\omega=0$ means. The measured real frequency is
+at most $0.024\,\wpe$, basically zero.
 
 \begin{figure}[t]
   \centering
-  \figorbox{ee_gamma_vs_k.pdf}{\columnwidth}{measured $\gamma(k)/\wb$ vs.\ $k\vz/\wb$ with theory}
-  \caption{Measured growth rate of each box wave in the quiet-start run (points) compared with
-  the cold-beam theory, Eq.~\eqref{eq:gamma} (line). Error bars show the spread of $\gamma$ over
-  fit windows. Seven waves ($m=4$--$10$) follow the curve ($m=4$--$9$: ratio $0.96\pm0.04$);
-  the slow growers $m=1$--$3$ and $11$ remain noisy.}
+  \includegraphics[width=\columnwidth]{figures/ee_spacetime_Ex.png}
+  \caption{Electric field vs.\ position and time (quiet start). The stripes grow out of the noise
+  and stay put until saturation (dashed line).}
+  \label{fig:st}
+\end{figure}
+
+\paragraph{Growth rate vs.\ wavenumber.}
+For each wave we fit straight lines to $\ln|E_k|$ over short windows across the growth phase and
+take the median; the error bar is the spread between windows. Figure~\ref{fig:gammak} shows the
+results on top of Eq.~\eqref{eq:gamma}. The fastest wave grows at $0.339\pm0.014\,\wpe$
+compared with $0.354\,\wpe$ from theory. Seven waves land on the curve, and for the six in the
+middle ($m=4$--$9$) the average of simulation over theory is $0.96\pm0.04$. The longest waves
+($m=1$--$3$) and the one near the cutoff ($m=11$) grow too slowly to get above the noise, so we
+can't measure them well. The simulation comes out about 4\% low; this is probably because our
+beams are a little warm, which slows the growth a bit, but we didn't check that separately. For
+comparison, the random start gave the same average but much more scatter
+($0.99\pm0.16$), because the wave only had about 3 $e$-folds to grow.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\columnwidth]{figures/ee_growth_rate_vs_k.png}
+  \caption{Measured growth rate of each wave (quiet start) vs.\ Chen's theory. Grey: slow growers
+  that are hard to measure.}
   \label{fig:gammak}
 \end{figure}
 
 % ===========================================================================
-\section{Discussion and conclusions}
-\label{sec:discussion}
+\section{Conclusion}
 
-The simulation shows the two-stream instability as the cold-fluid theory describes it. With no
-wave put in by hand, a ripple grows exponentially, following the theory slope for about 4.2
-$e$-folds (Fig.~\ref{fig:growth}). It grows in place: the measured real frequency is at most
-$0.034\,\wb$ ($0.024\,\wpe$), as $\mathrm{Re}\,\omega=0$ requires. The growth rates of the
-individual waves trace out the theory curve (Fig.~\ref{fig:gammak}), with a ratio of
-$0.96\pm0.04$ over the well-resolved waves, and growth stops when the wave saturates. The
-random-start run shows what follows: the wave traps the electrons and the beams mix.
-
-The practical lesson is that in PIC, where the particles start matters: even spacing (28-fold)
-plus more particles (1.8-fold) cut the seed 48-fold and made a blurry comparison clear.
+The simulation shows what the theory predicts: a wave grows exponentially out of noise, it
+doesn't move, and the growth rates follow Chen's curve. It is not perfect. The slowest waves are
+hard to measure and the rates are about 4\% low, but the physics is clearly there. We also
+learned that how the particles start matters a lot in PIC: evenly spacing them made the results
+much cleaner.
 
 {\small\setlength{\bibsep}{1pt}
 \bibliographystyle{unsrtnat}
