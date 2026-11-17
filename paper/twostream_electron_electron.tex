@@ -140,7 +140,7 @@ particles; (3) \emph{deposit} their current onto the grid; (4) \emph{solve} for 
 Steps 1 and 3 use a particle \emph{shape}. The simplest, nearest grid point, gives all of a
 particle's charge to the closest grid point. Cloud-in-cell splits it between the two nearest
 points according to distance, and higher orders spread it smoothly over three or four points.
-Smoother shapes average out more noise but cost more per particle.
+Smoother shapes average out more noise but cost more per particle. This run uses cloud-in-cell.
 
 \paragraph{Push.}
 \textsc{Entity} uses the Boris method~\citep{Boris1970}. With no magnetic field and motion only
@@ -154,15 +154,14 @@ along $x$, it reduces to the \emph{leapfrog} scheme
 with velocities offset by half a step from positions for extra accuracy. To follow the plasma
 oscillation the step must be short: leapfrog is stable for $\wpe\Delta t<2$ and accurate for
 $\wpe\Delta t\lesssim0.2$.
-\todo{confirm which pusher twostream.toml selects (Boris vs.\ Vay) in Entity v1.3.3.}
 
 \paragraph{Current and fields.}
-The deposited current conserves charge exactly~\citep{Esirkepov2001,Umeda2003}, so Gauss's law
+The current is deposited with the zigzag scheme~\citep{Umeda2003}, which conserves charge
+exactly, so Gauss's law
 stays satisfied automatically, and it is smoothed (\emph{filtered}) over neighboring cells to
 reduce noise. Fields are advanced on a staggered Yee grid~\citep{Yee1966}, which requires
 $c\Delta t<\Delta x$. In our 1D problem Amp\`ere's law reduces to
 $\partial_t E_x=-J_x/\varepsilon_0$, so the problem is effectively electrostatic.
-\todo{check Entity docs for the deposition scheme at each shape order.}
 
 \paragraph{Numerical heating.}
 PIC codes do not conserve energy exactly. On a grid, waves whose wavenumbers differ by a
@@ -190,9 +189,9 @@ $n_b=0.25\,n_0$ and $\wb=\omega_{p0}\sqrt{0.25}=0.05$. Equation~\eqref{eq:gmax} 
 $\gamma_{\max}=0.025$ at $k_{\max}\approx0.435$ ($\lambda_{\max}\approx14.4$). A periodic box
 of length $L=100$ allows only $k=2\pi m/L$; the $m=7$ mode has $k\vz/\wb=0.875$, close to the
 peak at $0.866$. The run lasts $\wb t=50$, about 25 $e$-foldings, enough to see growth out of
-the noise and saturation. Table~\ref{tab:params} lists all parameters. A cell is only
-$\Delta x/\lambda_D\approx0.04$ of the beam Debye length $\lambda_D=v_{th}/\wb=0.2$, far from the
-regime $\lambda_D\ll\Delta x$ where finite-grid heating occurs.
+the noise and saturation. Table~\ref{tab:params} lists all parameters. The Debye length of
+all the electrons together is $\lambda_D=v_{th}/\wpe=0.14$, about 17 cells ($\Delta x/\lambda_D\approx0.06$),
+far from the regime $\lambda_D\ll\Delta x$ where finite-grid heating occurs.
 \todo{update if the production runs change any of these values.}
 
 \begin{table}[t]
@@ -209,12 +208,13 @@ regime $\lambda_D\ll\Delta x$ where finite-grid heating occurs.
     Beam density $n_b$                  & $0.25\,n_0$         & $\wb=0.05$ \\
     Temperature $T/m_ec^2$              & $10^{-4}$           & $v_{th}/\vz\approx0.1$ \\
     Box length $L$                      & 100                 & $L\wb/\vz\approx50$ \\
-    Cells                               & 12288               & $\Delta x/\lambda_D\approx0.04$ \\
+    Cells                               & 12288               & $\Delta x/\lambda_D\approx0.06$ \\
     Time step (CFL $=0.5$)              & $\Delta t\approx0.0041$ & $\wb\Delta t\approx2\times10^{-4}$ \\
-    Particles per cell $\ppc$           & 16                  & \\
+    Particles per cell $\ppc$           & 16                  & 4 per species \\
     Current filter passes               & 4                   & \\
     Run time                            & 1000                & $\wb t=50$ \\
-    Shape order                         & \todo{}             & \\
+    Particle shape                      & cloud-in-cell       & first order \\
+    Pusher, deposit                     & Boris, zigzag       & \\
     \bottomrule
   \end{tabular}
 \end{table}
