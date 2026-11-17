@@ -11,7 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `analysis/` — **shared analysis home**: `scripts/` (bp_reader, viz_style, overview — general, run-agnostic), `reports/` (evidence reports)
 - `radiative/pp/` — per-run layout: `runs/<run>/` (`inputs/`, `scripts/`, `logs/`, `plots/`, optional run-specific `analysis/`; one dir per scratch run, currently `testPP`, `bw_aharonian`), plus `scripts/bind_gpu.sh`, `entity.xc` symlink
 - `radiative/pp_IC/` — run dir (old flat layout): `inputs/`, `scripts/` (SLURM), `logs/`, `analysis/`, `entity.xc` symlink
-- `twostream/` — 1D two-stream instability numerics study: `scripts/` (build, bind_gpu), `analysis/`, `runs/baseline/`, `runs/scan/` (see `twostream/README.md`)
+- `twostream/` — 1D two-stream instability study: `scripts/` (build, bind_gpu), `theory/`, `analysis/` (run analysis), `runs/` (`baseline`, `quiet`, `buneman`, `scan`), `results/` (deliverables: `talk/` final-project deck + figures + slide scripts, `report/` LaTeX reports) (see `twostream/README.md`)
 - `turb2d/` — empty scaffold
 - `docs/` — detailed guides (see index below)
 

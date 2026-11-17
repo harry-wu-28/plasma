@@ -10,7 +10,7 @@ Growth rates are medians over 40-unit fit windows sliding across the clean-growt
 with the window spread as the error bar (same method as slide_figures.py).
 
 Usage:
-    conda run -n analysis python twostream/analysis/talk_quiet_figures.py QUIET RANDOM --out talk/figures
+    conda run -n analysis python twostream/results/talk/scripts/talk_quiet_figures.py QUIET RANDOM --out twostream/results/talk/figures
 """
 
 import argparse
@@ -20,6 +20,7 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "analysis"))  # chen_ee, twostream_analysis
 import slide_figures as sf  # noqa: E402  (shared style)
 import quiet_visuals as qv  # noqa: E402
 import chen_ee as ce  # noqa: E402

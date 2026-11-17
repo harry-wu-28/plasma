@@ -5,8 +5,8 @@ exponentially out of noise, it grows in place without traveling, and the growth 
 wave traces out Chen's curve. The goal is to visualize the physics, not to run a precision test.
 
 10-minute talk + 10 minutes Q&A. Main slides 1–10 (~1,400 words of notes), then backup slides
-B1–B8, then likely Q&A. Figures are in `talk/figures/` (random-start versions in
-`talk/figures/random_start/`).
+B1–B8, then likely Q&A. Figures are in `twostream/results/talk/figures/` (random-start versions in
+`twostream/results/talk/figures/random_start/`).
 
 **Two runs, same grid and particle count (ppc0 = 16):**
 - *Quiet start* (job 11092712, `pgens/streaming_quiet`, to t ≈ 21/ω_p): particles start evenly
@@ -26,7 +26,7 @@ the electrons (both beams together). Wavenumber is written as kv₀/ω_p, time a
 - Harry Wu, [course name], [date]
 - Simulated with the Entity particle-in-cell (PIC) code
 
-**Figure:** `talk/assets/title_vortices.png` (background)
+**Figure:** `twostream/results/talk/assets/title_vortices.png` (background)
 
 **Speaker notes**
 Hi, I'm Harry. In class we derived the two-stream instability on paper. It's one thing to get
