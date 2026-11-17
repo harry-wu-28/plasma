@@ -1,0 +1,59 @@
+\begin{thebibliography}{8}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Buneman(1959)]{Buneman1959}
+O.~Buneman.
+\newblock Dissipation of currents in ionized media.
+\newblock \emph{Physical Review}, 115\penalty0 (3):\penalty0 503--517, 1959.
+\newblock \doi{10.1103/PhysRev.115.503}.
+
+\bibitem[Chen(2016)]{Chen2016}
+Francis~F. Chen.
+\newblock \emph{Introduction to Plasma Physics and Controlled Fusion}.
+\newblock Springer, Cham, 3rd edition, 2016.
+\newblock \doi{10.1007/978-3-319-22309-4}.
+
+\bibitem[Birdsall and Langdon(1991)]{BirdsallLangdon1991}
+C.~K. Birdsall and A.~B. Langdon.
+\newblock \emph{Plasma Physics via Computer Simulation}.
+\newblock IOP Publishing, Bristol, 1991.
+\newblock \doi{10.1201/9781315275048}.
+
+\bibitem[Hockney and Eastwood(1988)]{HockneyEastwood1988}
+R.~W. Hockney and J.~W. Eastwood.
+\newblock \emph{Computer Simulation Using Particles}.
+\newblock Adam Hilger, Bristol, 1988.
+\newblock \doi{10.1201/9780367806934}.
+
+\bibitem[Boris(1970)]{Boris1970}
+J.~P. Boris.
+\newblock Relativistic plasma simulation---optimization of a hybrid code.
+\newblock In \emph{Proceedings of the Fourth Conference on Numerical Simulation
+  of Plasmas}, pages 3--67, Washington, DC, 1970. Naval Research Laboratory.
+
+\bibitem[Esirkepov(2001)]{Esirkepov2001}
+T.~Zh. Esirkepov.
+\newblock Exact charge conservation scheme for particle-in-cell simulation with
+  an arbitrary form-factor.
+\newblock \emph{Computer Physics Communications}, 135:\penalty0 144--153, 2001.
+\newblock \doi{10.1016/S0010-4655(00)00228-9}.
+
+\bibitem[Umeda et~al.(2003)Umeda, Omura, Tominaga, and Matsumoto]{Umeda2003}
+T.~Umeda, Y.~Omura, T.~Tominaga, and H.~Matsumoto.
+\newblock A new charge conservation method in electromagnetic particle-in-cell
+  simulations.
+\newblock \emph{Computer Physics Communications}, 156:\penalty0 73--85, 2003.
+\newblock \doi{10.1016/S0010-4655(03)00437-5}.
+
+\bibitem[{Entity development team}(2025)]{Entity}
+{Entity development team}.
+\newblock Entity: a {GPU}-accelerated particle-in-cell code for plasma
+  astrophysics.
+\newblock \url{https://github.com/entity-toolkit/entity}, 2025.
+\newblock Version 1.3.3.
+
+\end{thebibliography}
