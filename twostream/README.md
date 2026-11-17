@@ -105,9 +105,20 @@ band core m = 4–9 (edges m = 1–3, 10–11 are noise-dominated). Total-energy
 larmor0/skindepth0² = 1. Together with γ matching theory this is consistent with a particle
 force of (q/m)E/larmor0; the separatrix drawn with it encloses the simulated vortices.
 
-## Chen-style figures
+## Chen §6.6 for two electron streams (theory vs simulation)
 
-`analysis/chen_figures.py RUN --out DIR [--fit-window T1 T2]` redraws the textbook
+[theory/chen_ee_derivation.md](theory/chen_ee_derivation.md) redoes Chen's Eqs. 6.19–6.35
+for his Problem 6.6 (two cold electron streams, ±v₀, n₀/2 each), including the exact roots
+(Re ω = 0, γ_max = ω_p/2√2 at kv₀ = √(3/8) ω_p, cutoff kv₀ = ω_p) and the eigenvector, and
+compares each prediction with the baseline run. `analysis/chen_ee.py RUN --out DIR
+[--window 60 140]` makes the figures (Chen Figs. 6.8/6.9, 7.11/7.12, 7.13, 7.19 for this
+case, plus roots, no-fit mode growth, eigenvector) and `chen_ee_comparison.csv`.
+
+## Illustrative figures
+
+`analysis/chen_figures.py RUN --out DIR [--fit-window T1 T2]` (energy timeline, linear
+bunching + Poisson check, phase-space snapshots, plateau; *not* reproductions of Chen's
+figures despite the file name) redraws the textbook
 two-stream story (Chen, *Introduction to Plasma Physics*): graphical dispersion F(ω) = 1 for
 Chen's beam-through-ions case and for these symmetric beams, Re/Im ω(k) roots with the
 measured γ(k), field-energy timeline, linear bunching + Poisson check, phase-space trapping
