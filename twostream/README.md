@@ -146,3 +146,17 @@ quotes the small-ω approximation (√3/2)(m/2M)^{1/3} ω_pe = 0.0561 ω_pe, whi
 With ω_pe = 0.1 and L = 100: box mode m = 16 sits on the peak, m ≤ 17 are unstable, the
 e-folding time is ≈184, and the run (t = 4000) covers ≈22 e-folds. The report is
 `paper/twostream_electron_ion.tex`.
+
+## Numerics actually used: Boris + zigzag + first-order shape (verified 2026-11-16)
+
+From the baseline run's own report (`twostream_baseline.info`: `Deposit: zigzag`,
+`Pusher: boris` for the beams) and the Entity source: the beams use the default Boris pusher
+(`defaults::em_pusher`), current is deposited with the charge-conserving zigzag scheme
+(Umeda et al. 2003), and fields are interpolated with first-order (linear, cloud-in-cell)
+weights (`getInterpFlds<0>`).
+
+**`-Dshape_order` is ignored for the zigzag deposit.** `cmake/config.cmake` only passes
+`-DSHAPE_ORDER` when `deposit=esirkepov`; with zigzag (the default) `SHAPE_ORDER` stays 0.
+So `SHAPE_ORDER=3 bash twostream/scripts/build_twostream.sh` builds the *same* first-order
+code, and the `shape3` scan variant is not a shape-order test. A real higher-order build
+needs `-Ddeposit=esirkepov -Dshape_order=3`.
