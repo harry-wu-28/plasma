@@ -54,8 +54,8 @@ frequency, and it predicts that the growing wave does not travel. We use the par
 (PIC) code \textsc{Entity} to watch this theory happen. With no wave put in by hand, a wave
 grows exponentially and stays in place, as predicted, and the growth rates of the individual
 waves trace out the theory curve: averaged over the well-resolved waves, the ratio of measured
-to predicted growth rate is $0.99\pm0.06$. A ``quiet start'', with the particles evenly spaced
-instead of placed at random, makes this clear by lowering the starting noise about 28-fold. The
+to predicted growth rate is $0.96\pm0.04$. A ``quiet start'', with the particles evenly spaced
+instead of placed at random, makes this clear by greatly lowering the starting noise. The
 goal is to visualize the physics, not to run a precision test.
 \end{abstract}
 
@@ -201,8 +201,9 @@ it saturates; we use it to show the nonlinear stage. The growth-rate measurement
 \emph{quiet-start} run that is identical except in two ways. The particles start evenly spaced
 in each cell, with each positron on top of its electron, so the charge density is exactly zero at
 $t=0$; velocities are still random Maxwellians (problem generator \texttt{streaming\_quiet}). It
-also stops earlier, at $\wb t=15$, before saturation. Its effective seed is about 28 times
-smaller, which adds about 3.3 clean $e$-folds. The Debye length of
+also has four times as many particles. In a short test at equal particle count, the even spacing
+alone lowered the effective seed about 28-fold (about 3.3 more clean $e$-folds). In the quiet run
+the fastest wave saturates at $\wb t\approx19$ ($\wpe t\approx26.8$). The Debye length of
 all the electrons together is $\lambda_D=v_{th}/\wpe=0.14$, about 17 cells ($\Delta x/\lambda_D\approx0.06$),
 far from the regime $\lambda_D\ll\Delta x$ where finite-grid heating occurs.
 \todo{update if the production runs change any of these values.}
@@ -210,7 +211,7 @@ far from the regime $\lambda_D\ll\Delta x$ where finite-grid heating occurs.
 \begin{table}[t]
   \centering
   \caption{Simulation parameters from \texttt{twostream.toml} in code units ($c=1$), with
-  dimensionless ratios on the right. Run times are random start/quiet start.}
+  dimensionless ratios on the right. Particle counts are random start/quiet start.}
   \label{tab:params}
   \small
   \begin{tabular}{@{}lll@{}}
@@ -223,9 +224,9 @@ far from the regime $\lambda_D\ll\Delta x$ where finite-grid heating occurs.
     Box length $L$                      & 100                 & $L\wb/\vz\approx50$ \\
     Cells                               & 12288               & $\Delta x/\lambda_D\approx0.06$ \\
     Time step (CFL $=0.5$)              & $\Delta t\approx0.0041$ & $\wb\Delta t\approx2\times10^{-4}$ \\
-    Particles per cell $\ppc$           & 16                  & 4 per species \\
+    Particles per cell $\ppc$           & 16/64               & 4/16 per species \\
     Current filter passes               & 4                   & \\
-    Run time                            & 1000/300            & $\wb t=50/15$ \\
+    Run time                            & 1000                & $\wb t=50$ \\
     Particle shape                      & cloud-in-cell       & first order \\
     Pusher, deposit                     & Boris, zigzag       & \\
     \bottomrule
@@ -236,7 +237,7 @@ far from the regime $\lambda_D\ll\Delta x$ where finite-grid heating occurs.
 We Fourier transform $E_x(x,t)$ in $x$ to get the amplitude $|\tilde E_k(t)|$ of each box wave.
 During growth $|\tilde E_k|\propto e^{\gamma t}$, so $\ln|\tilde E_k|$ versus $t$ is a straight
 line of slope $\gamma(k)$. We fit it over many 40-unit windows sliding across the growth phase
-($t\approx115$--$280$ in the quiet run), take the median as $\gamma$, and take the spread between
+($\wpe t\approx9.8$--$22.5$ in the quiet run), take the median as $\gamma$, and the spread between
 windows as the uncertainty (Fig.~\ref{fig:growth}).
 
 \begin{figure}[t]
@@ -244,7 +245,7 @@ windows as the uncertainty (Fig.~\ref{fig:growth}).
   \figorbox{ee_growth_mode.pdf}{\columnwidth}{$\ln|\tilde E_k(t)|$ for $k\approx k_{\max}$, with fit}
   \caption{Amplitude of the fastest-growing wave versus time (quiet start). Dashed: the theory
   slope $e^{\gamma t}$, not fitted, started at the same point. The simulation follows it for about
-  4.2 $e$-folds (a factor of $\sim$66) and is still growing when the run ends.}
+  4.2 $e$-folds (a factor of $\sim$70) before growth stops at saturation.}
   \label{fig:growth}
 \end{figure}
 
@@ -255,13 +256,14 @@ windows as the uncertainty (Fig.~\ref{fig:growth}).
 \paragraph{Growth rate versus wavenumber.}
 Figure~\ref{fig:gammak} compares the measured $\gamma(k)$ from the quiet-start run with
 Eq.~\eqref{eq:gamma}. For the fastest wave ($m=7$, $k\vz/\wb=0.875$) we measure
-$\gamma=0.48\pm0.03\,\wb$ ($0.342\pm0.024\,\wpe$), against the theory value $\wb/2$
-($0.354\,\wpe$). Averaged over the well-resolved waves $m=4$--$9$, the ratio of measured to
-theoretical growth rate is $0.99\pm0.06$ (conservative, since the waves share one noise
-realization), and the median spread of a single wave is 15\% of theory. The slow
-growers, the longest waves ($m=1$--$3$) and those near the cutoff $k\vz=\sqrt2\,\wb$
-($m=10$--$11$), grow so little before the run ends that they stay close to the noise and are
-pushed around by the strong modes, so their fits remain noisy.
+$\gamma=0.48\pm0.02\,\wb$ ($0.339\pm0.014\,\wpe$), against the theory value $\wb/2$
+($0.354\,\wpe$). Seven waves ($m=4$--$10$) land on the curve. Averaged over $m=4$--$9$, the
+ratio of measured to theoretical growth rate is $0.96\pm0.04$ (conservative, since the waves
+share one noise realization), and the median spread of a single wave is 9\% of theory. The
+$\sim$4\% shortfall is plausibly the small beam temperature, which slows the growth slightly
+(not verified separately). The slow growers, the longest waves ($m=1$--$3$) and the one nearest
+the cutoff $k\vz=\sqrt2\,\wb$ ($m=11$), barely rise above the noise before the fast waves
+saturate and are pushed around by them, so their fits remain noisy.
 
 The random-start run gives the same average but far more scatter ($0.99\pm0.16$; single waves
 $\pm30\%$), because it has only about 3 $e$-folds of clean growth: where the particles start
@@ -272,8 +274,8 @@ matters.
   \figorbox{ee_gamma_vs_k.pdf}{\columnwidth}{measured $\gamma(k)/\wb$ vs.\ $k\vz/\wb$ with theory}
   \caption{Measured growth rate of each box wave in the quiet-start run (points) compared with
   the cold-beam theory, Eq.~\eqref{eq:gamma} (line). Error bars show the spread of $\gamma$ over
-  fit windows. The well-resolved waves $m=4$--$9$ follow the curve (ratio $0.99\pm0.06$); the
-  slow growers $m=1$--$3$ and $10$--$11$ remain noisy.}
+  fit windows. Seven waves ($m=4$--$10$) follow the curve ($m=4$--$9$: ratio $0.96\pm0.04$);
+  the slow growers $m=1$--$3$ and $11$ remain noisy.}
   \label{fig:gammak}
 \end{figure}
 
@@ -284,14 +286,14 @@ matters.
 The simulation shows the two-stream instability as the cold-fluid theory describes it. With no
 wave put in by hand, a ripple grows exponentially, following the theory slope for about 4.2
 $e$-folds (Fig.~\ref{fig:growth}). It grows in place: the measured real frequency is at most
-$0.02\,\wb$ ($0.014\,\wpe$), as $\mathrm{Re}\,\omega=0$ requires. The growth rates of the
+$0.034\,\wb$ ($0.024\,\wpe$), as $\mathrm{Re}\,\omega=0$ requires. The growth rates of the
 individual waves trace out the theory curve (Fig.~\ref{fig:gammak}), with a ratio of
-$0.99\pm0.06$ over the well-resolved waves. The longer random-start run shows what follows:
-the wave traps the electrons and growth stops.
+$0.96\pm0.04$ over the well-resolved waves, and growth stops when the wave saturates. The
+random-start run shows what follows: the wave traps the electrons and the beams mix.
 
 The slow growers remain hard to measure. The practical lesson is that in a PIC simulation,
-where the particles start matters: an evenly spaced start lowered the noise about 28-fold and
-turned a blurry comparison into a clear one.
+where the particles start matters: evenly spaced starting positions (28-fold lower seed at equal
+particle count), together with more particles, turned a blurry comparison into a clear one.
 
 {\small\setlength{\bibsep}{1pt}
 \bibliographystyle{unsrtnat}
