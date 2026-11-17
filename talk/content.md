@@ -195,24 +195,23 @@ before they can show clean growth.
 
 ---
 
-## Slide 9: After growth stops: trapping and the plateau
+## Slide 9: After growth stops: the plateau
 
 **Bullets**
-- Simulated electrons sit on the trapped orbits predicted from the measured potential (Chen Fig. 7.12)
-- The velocity distribution starts with two separate peaks…
-- …and flattens into a plateau, removing the beam energy that drove the wave (Chen Fig. 7.19)
+- The velocity distribution starts as two sharp peaks, one per beam
+- After saturation it flattens into a broad plateau
+- The beams have mixed, so there is no free energy left to drive the wave (Chen Fig. 7.19)
 
-**Figure:** `trapping_separatrix.png` (left) and `fv_plateau.png` (right)
+**Figure:** `fv_plateau.png` (full size)
 
 **Speaker notes**
 Linear theory stops when the wave gets big, but Chen also describes what happens next, and the
-simulation shows that too. On the left, I took the electric potential from the simulation and
-drew the orbits an electron should follow in it. The red line is the boundary between trapped
-and passing electrons. The simulated electrons, in grey, sit right on those orbits. On the
-right is the velocity distribution. It starts as two sharp peaks, one for each beam. By the end
-it has flattened into a broad plateau. The two beams have mixed, so there's no more free
-energy to drive the instability. This is what Chen sketches in Figure 7.19, and the simulation
-reproduces it.
+simulation shows that too. This is the velocity distribution: how many electrons have each
+velocity. At the start there are two sharp peaks, one for each beam, at plus and minus 0.1c.
+During growth the peaks spread toward each other. By the end they have flattened into one
+broad plateau centered on zero velocity. The two beams have mixed together, so there's no
+longer a separate fast stream to feed the wave, and the instability shuts itself off. This is
+the picture Chen sketches in Figure 7.19, and the simulation reproduces it.
 
 ---
 
@@ -235,6 +234,25 @@ has only a short window of clean exponential growth before it saturates. That's 
 slow-growing waves are hard to measure. Also, a periodic box only allows certain wavelengths.
 And PIC isn't perfect at conserving energy, though here the total energy stayed constant to
 better than one part in 100,000. Thank you, and I'm happy to take questions.
+
+---
+
+## Backup slide B1: Trapped electrons follow the predicted orbits (Chen Fig. 7.12)
+
+**Bullets**
+- Black line: trapping boundary computed from the simulation's own electric potential
+- Dots: simulated electrons (blue = right-moving beam, red = left-moving beam)
+- Electrons inside the boundary are trapped in the wave's potential wells
+
+**Figure:** `trapping_separatrix.png` (full size)
+
+**Speaker notes**
+This is for questions about trapping. I took the electric potential from the simulation at
+saturation and computed the boundary between electrons that are trapped in the wave and
+electrons that pass over it. That's the black line. The dots are the simulated electrons, blue
+for the beam moving right and red for the beam moving left. They swirl inside the boundary and
+pile up along its edge, which is exactly what Chen's trapped-orbit picture in Figure 7.12
+predicts. So the electrons stop the growth by getting trapped, just as the theory says.
 
 ---
 
