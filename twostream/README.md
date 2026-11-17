@@ -254,3 +254,12 @@ lower at t ≤ 1/ω_p and 29× at 4–6/ω_p), but most of the gain survives. Sa
 WARNING), `runs/quiet/scripts/cpu_quiet_visual.sh` (1 node × 1 rank × 32 threads, preemptable;
 the account's 32-CPU cap rules out multi-node), job 11093069, output in
 `/dartfs-hpc/scratch/f007hd2/twostream/quiet/quiet_visual/`.
+
+**Full quiet run (job 11093069, ppc0 = 64; linear phase from completed snapshots to 34/ω_p,
+2026-11-17).** Fit window t = 140–320 (9.8–22.5/ω_p), saturation (first field-energy peak) at
+26.8/ω_p. m = 7: 0.339 ± 0.014 ω_p vs 0.354; m = 4–9 mean ratio 0.96 ± 0.04 (the ~4% shortfall
+is plausibly the beam temperature, v_th = 0.1 v0, not separately computed); median spread 9%;
+4.2 clean e-folds (×70); |Re ω| ≤ 0.024 ω_p; slow growers m = 1–3, 11. Seed vs random start:
+48× (+3.9 e-folds) = quiet start 28× (smoke vs random, both ppc0 = 16) × 4× particles 1.8×
+(full vs smoke, both quiet; ≈ √4, as expected if the residual seed is thermal-velocity noise).
+22.4 ms/step on 1 rank × 32 threads.

@@ -15,8 +15,9 @@ B1–B8, then likely Q&A. Figures are in `twostream/results/talk/figures/` (rand
 - *Random start* (baseline, CPU job 11088180, ppc0 = 16 = 4 per cell per beam, to t ≈ 70/ω_p):
   particles start at random positions. It gives the phase-space video, trapping and f(v) figures
   (slide 6, B2, B3) and the "before" numbers (B5).
-- The 28× noise reduction was measured in a short test (smoke job 11092712) comparing quiet and
-  random starts at the *same* particle count (ppc0 = 16). The smoke run is not otherwise used.
+- Seed noise vs the random start: 48× lower overall (+3.9 clean e-folds). Evenly spaced positions
+  alone give 28× (measured in smoke job 11092712, both at ppc0 = 16); the 4× extra particles give a
+  further 1.8×. The smoke run is not otherwise used.
 
 **Units on every slide (same as Chen and the figures):** ω_p is the plasma frequency of *all*
 the electrons (both beams together). Wavenumber is written as kv₀/ω_p, time as t in 1/ω_p.
@@ -137,9 +138,9 @@ whatever small unevenness the particles start with. I used two runs that differ 
 the particles start. In the random start they're placed at random, so some cells get a few
 more particles than others, and that makes lumps at every wavelength. In the quiet start
 they're evenly spaced, with each electron sitting on its positive partner, so the starting
-charge is almost perfectly smooth. In a test with the same number of particles, that made the
-starting noise about 28 times smaller. My main quiet-start run also uses four times as many
-particles, which quiets it a little more.
+charge is almost perfectly smooth. That alone makes the starting noise about 28 times smaller.
+My main quiet-start run also uses four times as many particles, which cuts it almost twice more,
+so it starts about 48 times quieter than the random start.
 
 ---
 
@@ -322,8 +323,8 @@ two beams is gone, which is the flattening Chen sketches in Figure 7.19.
 **Bullets**
 - Random positions → cell-to-cell counting noise at every wavelength (~1/√N)
 - Evenly spaced positions, each electron on its positive partner → almost no starting charge
-- Same particle count (test run): starting noise 28× lower → about 3.3 more clean e-folds
-- Main quiet run (also 4× more particles): seven waves on Chen's curve (m=4–9: 0.96 ± 0.04, spread 9%)
+- Evenly spaced positions cut the seed noise 28×; 4× more particles cut it a further 1.8× (48× overall)
+- Result: ~3.9 more clean e-folds, and seven waves on Chen's curve (m=4–9: 0.96 ± 0.04, spread 9%)
 
 **Figure:** `gamma_k_quiet_vs_random.png` (quiet-start points with Chen's curve)
 
@@ -335,9 +336,10 @@ first run that left only about three e-folds of growth, and single waves scatter
 30 percent, although the average still came out at 0.99 plus or minus 0.16. With evenly spaced
 positions, and each electron sitting on its positive partner, the starting charge is nearly
 zero everywhere. The velocities are still random, so some noise creeps back in, but the
-effective seed is about 28 times smaller, in a test with the same number of particles. That
-buys about 3.3 extra e-folds of clean growth. My main quiet run also has four times as many
-particles, and its growth rates settle onto Chen's curve, as this plot shows. Same physics, much
+effective seed is about 28 times smaller. My main quiet run also has four times as many
+particles, which cuts the noise almost two times more, about 48 times quieter overall. That buys
+about four extra e-folds of clean growth, and the growth rates settle onto Chen's curve, as this
+plot shows. Same physics, much
 clearer picture.
 
 ---
@@ -414,7 +416,9 @@ current from pulling it back. That run is still in progress.
 With random positions, the number of particles in a cell fluctuates by about √N, a relative
 noise of about 1/√N, and that seeds every wavelength. Evenly spacing the particles, with each
 electron on its positive partner, makes the starting charge nearly zero. The velocities are
-still random, so some noise comes back, but the effective seed is about 28 times lower.
+still random, so some noise comes back, but the effective seed is about 28 times lower. Using
+four times as many particles cuts it a further 1.8 times, so my main run starts about 48 times
+quieter than the random start.
 
 **Q2. Isn't the quiet start cheating?**
 No. The physics (beams, speeds, temperature, grid) is identical. It only

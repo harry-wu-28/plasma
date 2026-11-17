@@ -201,8 +201,9 @@ it saturates; we use it to show the nonlinear stage. The growth-rate measurement
 \emph{quiet-start} run that is identical except in two ways. The particles start evenly spaced
 in each cell, with each positron on top of its electron, so the charge density is exactly zero at
 $t=0$; velocities are still random Maxwellians (problem generator \texttt{streaming\_quiet}). It
-also has four times as many particles. In a short test at equal particle count, the even spacing
-alone lowered the effective seed about 28-fold (about 3.3 more clean $e$-folds). In the quiet run
+also has four times as many particles. The even spacing alone lowers the effective seed 28-fold
+(at equal particle count) and the extra particles a further 1.8-fold, 48-fold overall. In the
+quiet run
 the fastest wave saturates at $\wb t\approx19$ ($\wpe t\approx26.8$). The Debye length of
 all the electrons together is $\lambda_D=v_{th}/\wpe=0.14$, about 17 cells ($\Delta x/\lambda_D\approx0.06$),
 far from the regime $\lambda_D\ll\Delta x$ where finite-grid heating occurs.
@@ -263,7 +264,7 @@ share one noise realization), and the median spread of a single wave is 9\% of t
 $\sim$4\% shortfall is plausibly the small beam temperature, which slows the growth slightly
 (not verified separately). The slow growers, the longest waves ($m=1$--$3$) and the one nearest
 the cutoff $k\vz=\sqrt2\,\wb$ ($m=11$), barely rise above the noise before the fast waves
-saturate and are pushed around by them, so their fits remain noisy.
+saturate, so their fits remain noisy.
 
 The random-start run gives the same average but far more scatter ($0.99\pm0.16$; single waves
 $\pm30\%$), because it has only about 3 $e$-folds of clean growth: where the particles start
@@ -291,9 +292,8 @@ individual waves trace out the theory curve (Fig.~\ref{fig:gammak}), with a rati
 $0.96\pm0.04$ over the well-resolved waves, and growth stops when the wave saturates. The
 random-start run shows what follows: the wave traps the electrons and the beams mix.
 
-The slow growers remain hard to measure. The practical lesson is that in a PIC simulation,
-where the particles start matters: evenly spaced starting positions (28-fold lower seed at equal
-particle count), together with more particles, turned a blurry comparison into a clear one.
+The practical lesson is that in PIC, where the particles start matters: even spacing (28-fold)
+plus more particles (1.8-fold) cut the seed 48-fold and made a blurry comparison clear.
 
 {\small\setlength{\bibsep}{1pt}
 \bibliographystyle{unsrtnat}
