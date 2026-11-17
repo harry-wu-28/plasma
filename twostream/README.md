@@ -136,3 +136,13 @@ with the separatrix computed from the measured potential, and the f(uₓ, t) pla
 Numerical heating shows as drift in total energy, `T00 + (σ0/2)(E² + B²)` from the
 stats file (`*_energy.png`). Note `T00` is printed with 6 significant figures, so
 relative drifts below ~1e-5 are not resolved.
+
+## Buneman run: exact cold-fluid numbers (2026-11-16)
+
+Solving Chen Eq. 6.30, `1 = ω_pi²/ω² + ω_pe²/(ω − k v0)²`, numerically for M/m = 1836:
+γ_max = **0.0544 ω_pe** at k v0 = 1.006 ω_pe, Re ω = 0.036 ω_pe; cutoff k v0 =
+(1 + (m/M)^{1/3})^{3/2} ω_pe = 1.125 ω_pe. The comment in `runs/buneman/inputs/buneman.toml`
+quotes the small-ω approximation (√3/2)(m/2M)^{1/3} ω_pe = 0.0561 ω_pe, which is 3% high.
+With ω_pe = 0.1 and L = 100: box mode m = 16 sits on the peak, m ≤ 17 are unstable, the
+e-folding time is ≈184, and the run (t = 4000) covers ≈22 e-folds. The report is
+`paper/twostream_electron_ion.tex`.
