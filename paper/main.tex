@@ -1,6 +1,7 @@
 % Two-stream instability as a test of PIC numerics -- final report
 % Builds on Overleaf as-is (pdfLaTeX + BibTeX), or locally with `latexmk main.tex`.
 % Missing figures render as labelled placeholder boxes; see figures/README.md.
+% Audience: an undergraduate taking a first course in plasma physics.
 \documentclass[10pt,twocolumn,letterpaper]{article}
 
 \usepackage[letterpaper,margin=0.75in,columnsep=0.25in]{geometry}
@@ -45,13 +46,16 @@
 
 \begin{abstract}
 \noindent
-We simulate the cold, symmetric electron--electron two-stream instability with the
-particle-in-cell (PIC) code \textsc{Entity} and compare the measured linear growth rate
-$\gamma(k)$ with the analytic dispersion relation, whose maximum is $\gamma_{\max}=\wb/2$ at
-$k\vz=(\sqrt{3}/2)\,\wb$. Because the exact answer is known, the instability serves as a
-controlled test of the numerical method. We vary the number of particles per cell, the grid
-resolution, and the particle shape function, and quantify how each affects the noise floor,
-the accuracy of $\gamma(k)$, and numerical heating.
+When two beams of electrons pass through each other, a small ripple in their density can grow
+exponentially into a large electric wave. This is the two-stream instability. For cold beams of
+equal density, pen-and-paper theory predicts exactly how fast each wavelength grows: the
+fastest growth rate is $\gamma_{\max}=\wb/2$, where $\wb$ is the plasma frequency of one beam.
+We reproduce this instability on a computer with the particle-in-cell (PIC) code
+\textsc{Entity}, measure the growth rate, and compare it with the theory. Because we know the
+right answer in advance, the comparison tells us how much error the simulation method itself
+introduces. We change three numerical settings (the number of simulated particles, the grid
+spacing, and the particle ``shape'') and see how each one affects the accuracy of the growth
+rate and the amount of artificial heating.
 \todo{one sentence on the headline result once runs are in.}
 \end{abstract}
 
@@ -59,138 +63,236 @@ the accuracy of $\gamma(k)$, and numerical heating.
 \section{Introduction}
 \label{sec:intro}
 
-Two interpenetrating particle streams are unstable to the growth of electrostatic waves: a
-small density perturbation bunches the beams, the bunching reinforces the electric field, and
-the field grows exponentially until the beams are trapped~\citep{BohmGross1949,Chen2016}. The
-two-stream instability is among the simplest kinetic instabilities, and in its cold, symmetric
-form its linear growth rate follows from a quartic dispersion relation in closed form.
+Picture two streams of electrons moving through each other in opposite directions, with
+positive ions in the background so that the plasma is neutral overall. If the electron density
+is perfectly uniform, nothing happens. But suppose a small ripple appears, with slightly more
+electrons in some places and slightly fewer in others. The ripple produces a weak electric
+field, which speeds up some electrons and slows down others. The electrons then bunch up even
+more where the density was already high. More bunching gives a stronger field, which gives more
+bunching, and the ripple grows exponentially. Growth stops only when the wave becomes strong
+enough to trap electrons in its potential wells~\citep{BohmGross1949,Chen2016}. Because a small
+disturbance grows on its own instead of dying away, this is called an \emph{instability}.
 
-That makes it a natural benchmark for PIC codes~\citep{BirdsallLangdon1991}. A PIC simulation
-represents the distribution function by a finite number of macroparticles that move through
-fields defined on a grid. Both choices introduce errors: finite sampling sets a thermal noise
-floor from which the instability must grow, and the grid can couple to the beams and drive
-spurious heating~\citep{Langdon1970,Okuda1972}. In this project we use the instability to
-measure these errors directly. Section~\ref{sec:theory} recalls the growth rate,
-Sec.~\ref{sec:pic} summarizes the PIC algorithm, Sec.~\ref{sec:setup} describes the
-simulations, and Secs.~\ref{sec:results}--\ref{sec:discussion} compare them with theory.
+The two-stream instability is one of the simplest instabilities in plasma physics. When the
+beams are cold (all electrons in a beam have the same velocity) and have equal density, the
+growth rate can be calculated exactly. That makes it a useful test problem for computer
+simulations~\citep{BirdsallLangdon1991}. Real plasmas contain enormous numbers of particles, so
+a simulation cannot follow every one of them. A particle-in-cell (PIC) code instead follows a
+much smaller number of ``macroparticles'' and computes the electric field on a grid of points
+in space. Both shortcuts introduce errors. Having too few particles makes the simulation
+noisy, and the grid can artificially heat the plasma~\citep{Langdon1970,Okuda1972}. Since we
+know the exact answer for the two-stream instability, we can measure how large these errors
+are.
+
+The report is organized as follows. Section~\ref{sec:theory} derives the growth rate from the
+cold-fluid equations. Section~\ref{sec:pic} explains how a PIC code works.
+Section~\ref{sec:setup} describes our simulations, and Secs.~\ref{sec:results}
+and~\ref{sec:discussion} compare the results with the theory.
 
 % ===========================================================================
-\section{Linear theory (recap)}
+\section{Linear theory}
 \label{sec:theory}
 
-We take two cold electron beams of equal density $n_b$ drifting at $\pm\vz$ along $x$ over an
-immobile neutralizing ion background. Each beam has plasma frequency
-$\wb^2 = n_b e^2/(\varepsilon_0 m_e)$, so the total plasma frequency is $\wpe^2=2\wb^2$. The
-standard cold-fluid derivation~\citep{Chen2016} gives the dispersion relation
+\paragraph{Setup.}
+We take two cold electron beams, each with density $n_b$, moving along $x$ with velocities
+$+\vz$ and $-\vz$. The ions are treated as a fixed, uniform positive background that keeps the
+plasma neutral. Each beam has its own plasma frequency,
 \begin{equation}
-  1 = \frac{\wb^2}{(\omega - k\vz)^2} + \frac{\wb^2}{(\omega + k\vz)^2},
+  \wb^2 = \frac{n_b e^2}{\varepsilon_0 m_e},
+\end{equation}
+which is the frequency at which that beam's electrons would oscillate if they were displaced
+on their own. Because the total electron density is $2n_b$, the plasma frequency of all
+electrons together is $\wpe^2=2\wb^2$.
+
+\paragraph{Cold-fluid equations.}
+We treat each beam $j$ as a fluid with density $n_j$ and velocity $v_j$. Each fluid obeys the
+continuity equation and Newton's second law, and the two are coupled through Gauss's law:
+\begin{align}
+  \frac{\partial n_j}{\partial t} + \frac{\partial (n_j v_j)}{\partial x} &= 0, \\
+  m_e\left(\frac{\partial v_j}{\partial t} + v_j\frac{\partial v_j}{\partial x}\right) &= -eE, \\
+  \varepsilon_0\frac{\partial E}{\partial x} &= -e\,(n_1 + n_2 - 2n_b).
+\end{align}
+
+\paragraph{Linearizing.}
+We write each quantity as its uniform value plus a small wave-like ripple, for example
+$n_j = n_b + \tilde n_j\, e^{i(kx-\omega t)}$, and keep only terms that are first order in the
+ripples. A beam moving at velocity $v_{0j}$ ($=\pm\vz$) sees the wave at the Doppler-shifted
+frequency $\omega - k v_{0j}$. Newton's law gives the velocity ripple, and the continuity
+equation turns it into a density ripple:
+\begin{equation}
+  \tilde v_j = \frac{-ie\tilde E}{m_e(\omega - k v_{0j})}, \qquad
+  \tilde n_j = \frac{k n_b\,\tilde v_j}{\omega - k v_{0j}}.
+\end{equation}
+Substituting both density ripples into Gauss's law and dividing out $ik\tilde E$ gives the
+\emph{dispersion relation}, which says which combinations of $\omega$ and $k$ are allowed:
+\begin{equation}
+  1 = \frac{\wb^2}{(\omega - k\vz)^2} + \frac{\wb^2}{(\omega + k\vz)^2}.
   \label{eq:disp}
 \end{equation}
-a quadratic in $\omega^2$ whose lower root is purely growing for $k\vz<\sqrt2\,\wb$, with
+
+\paragraph{Solving for the growth rate.}
+Multiplying through by both denominators turns Eq.~\eqref{eq:disp} into a quadratic equation for
+$\omega^2$:
+\begin{equation}
+  \omega^2 = k^2\vz^2 + \wb^2 \pm \wb\sqrt{\wb^2 + 4k^2\vz^2}.
+\end{equation}
+Take the minus sign. When $k\vz<\sqrt2\,\wb$ this root is negative, so $\omega$ is purely
+imaginary, $\omega = i\gamma$. The ripple then grows as $e^{i(kx-\omega t)}\propto e^{\gamma t}$,
+with growth rate
 \begin{equation}
   \gamma^2(k) = \wb\sqrt{\wb^2 + 4k^2\vz^2} - k^2\vz^2 - \wb^2 .
   \label{eq:gamma}
 \end{equation}
-The maximum is
+Waves shorter than the cutoff (larger $k$) do not grow at all. Setting
+$\dd\gamma^2/\dd(k^2)=0$ gives the fastest-growing wave:
 \begin{equation}
   \gamma_{\max} = \tfrac{1}{2}\,\wb \quad\text{at}\quad k_{\max}\vz = \tfrac{\sqrt{3}}{2}\,\wb .
   \label{eq:gmax}
 \end{equation}
-Equation~\eqref{eq:gamma} is the reference curve for every measurement below. Linear growth
-ends when the wave traps the beam electrons, after which phase-space vortices
-form~\citep{BirdsallLangdon1991}.
+In one growth time $1/\gamma$ the amplitude grows by a factor of $e$. This is called one
+``$e$-folding.''
+
+Equation~\eqref{eq:gamma} is the reference curve for every measurement below. It holds only
+while the ripples are small, which is why it is called \emph{linear} theory. Once the wave
+becomes large enough to trap electrons, exponential growth stops and the electrons swirl
+around inside the wave's potential wells, forming vortices in a plot of position versus
+velocity (phase space)~\citep{BirdsallLangdon1991}.
 
 % ===========================================================================
 \section{The particle-in-cell method}
 \label{sec:pic}
 
 \paragraph{Macroparticles.}
-A PIC code samples the distribution function $f(x,v,t)$ with $N$ macroparticles, each
-carrying the charge and mass of $w\gg1$ real electrons but the same $q/m$, so it follows the
-same orbit. Fields live on a grid of spacing $\Delta x$. With $\ppc$ particles per cell the
-density in a cell fluctuates by $\delta n/n\sim\ppc^{-1/2}$, which seeds every mode at a
-thermal noise level far above that of a real plasma~\citep{BirdsallLangdon1991}. For an
-instability this is useful (no explicit seed is needed) but it also limits how many
-$e$-foldings of clean linear growth can be observed before saturation.
+A real plasma has far too many electrons to simulate one by one. A PIC code instead uses
+\emph{macroparticles}. Each macroparticle stands for a large number $w$ of real electrons, so
+it carries $w$ times the charge and $w$ times the mass of one electron. The charge-to-mass
+ratio $q/m$ is unchanged, so a macroparticle follows exactly the same path that a single
+electron would. The electric field is stored only at a set of grid points spaced $\Delta x$
+apart, and each grid cell holds $\ppc$ macroparticles on average.
+
+Using few particles has a side effect: the density is noisy. If a cell holds about $\ppc$
+particles, random fluctuations change that number by about $\sqrt{\ppc}$, so
+$\delta n/n\sim\ppc^{-1/2}$. That is much noisier than a real plasma. For our problem the noise
+is partly helpful, because it supplies the small initial ripple and we do not have to add one
+by hand. It also has a cost. The instability starts from a larger amplitude, so it reaches
+saturation sooner, and that leaves fewer $e$-foldings of clean exponential growth to
+measure~\citep{BirdsallLangdon1991}.
 
 \paragraph{The PIC cycle.}
-Each step of length $\Delta t$ has four stages~\citep{BirdsallLangdon1991,HockneyEastwood1988}:
-(1) interpolate fields to the particles, (2) push the particles, (3) deposit their current on
-the grid, and (4) advance the fields. Positions and momenta are staggered by $\Delta t/2$
-(leapfrog), which makes the scheme second-order accurate and time-reversible.
+The simulation advances in small time steps of length $\Delta t$. Each step repeats the same
+four stages~\citep{BirdsallLangdon1991,HockneyEastwood1988}:
+\begin{enumerate}\itemsep0pt
+  \item \emph{Gather:} find the field at each particle from the nearby grid values.
+  \item \emph{Push:} use the force to update each particle's velocity and position.
+  \item \emph{Deposit:} add up the charge and current that the particles carry onto the grid.
+  \item \emph{Solve:} use that current to update the fields on the grid.
+\end{enumerate}
 
-\paragraph{Interpolation and shape functions.}
-Each macroparticle has a finite shape $S(x)$, and the field it feels is
-$\bm E(x_p)=\sum_i \bm E_i\,S(x_i-x_p)$. The same $S$ is used for deposition, which removes
-self-forces. Common choices are B-splines of increasing order: nearest-grid-point (order 0),
-cloud-in-cell (linear, order 1), and quadratic or cubic splines. In Fourier space
-$\hat S(k)\propto[\mathrm{sinc}(k\Delta x/2)]^{\ell+1}$ for order $\ell$, so higher order
-damps short-wavelength particle noise more strongly and reduces its aliasing onto resolved
-modes, at the cost of touching more grid points per particle.
+\paragraph{Particle shapes.}
+Steps 1 and 3 need a rule that connects particles, which can sit anywhere, to grid points,
+which are fixed. In PIC this rule is described by giving each macroparticle a small spatial
+\emph{shape}. The simplest rule, \emph{nearest grid point}, assigns all of a particle's charge
+to the closest grid point. This works but is noisy, because the charge jumps from one point to
+the next as the particle moves. The next rule, \emph{cloud-in-cell}, treats the particle as a
+small cloud one cell wide and splits its charge between the two nearest grid points in
+proportion to how close it is to each. Higher-order shapes spread the charge smoothly over
+three or four grid points. Smoother shapes average out more of the particle noise, especially
+at very short wavelengths, but each particle then touches more grid points, so every step
+takes longer. The same shape is used for gathering and depositing, which guarantees that a
+particle does not push on itself.
 
 \paragraph{Particle push.}
-Momenta $\bm u=\gamma\bm v$ are advanced with the Boris scheme~\citep{Boris1970}, which splits
-the Lorentz force into a half electric kick, a magnetic rotation, and a second half kick:
+The push integrates Newton's second law, $m\,\dd\bm v/\dd t = q(\bm E+\bm v\times\bm B)$, using
+the Boris method~\citep{Boris1970}, the standard choice in PIC codes. In our problem the
+magnetic field is essentially zero and the particles move only along $x$, so the push reduces
+to the familiar \emph{leapfrog} scheme:
 \begin{align}
-  \bm u^- &= \bm u^{n-1/2} + \tfrac{q\Delta t}{2m}\bm E^{n}, \\
-  \bm u^+ &= \bm u^- + (\bm u^- + \bm u^-\times\bm t)\times\bm s, \\
-  \bm u^{n+1/2} &= \bm u^+ + \tfrac{q\Delta t}{2m}\bm E^{n},
+  v^{n+1/2} &= v^{n-1/2} + \frac{q}{m}E^{n}\,\Delta t, \\
+  x^{n+1} &= x^{n} + v^{n+1/2}\,\Delta t .
 \end{align}
-with $\bm t = q\bm B^n\Delta t/(2m\gamma^n)$ and $\bm s = 2\bm t/(1+t^2)$, followed by
-$\bm x^{n+1}=\bm x^n+\bm v^{n+1/2}\Delta t$. The rotation conserves $|\bm u|$ exactly, which
-is why Boris is the standard pusher. Here $\bm B\approx0$, so the push reduces to a leapfrog
-update in $E_x$, which is stable only for $\wpe\Delta t<2$ and accurate for
-$\wpe\Delta t\lesssim0.2$.
+Here a superscript $n$ means ``at time $n\Delta t$.'' Velocities are stored at times offset by half a
+step from the positions, which makes the method more accurate than updating both at the same time.
+Leapfrog has one important limit. A plasma naturally oscillates at $\wpe$, and if the time step
+is too long to follow that oscillation the simulation blows up. The scheme is stable only for
+$\wpe\Delta t<2$ and is accurate for $\wpe\Delta t\lesssim0.2$.
 \todo{confirm which pusher twostream.toml selects (Boris vs.\ Vay) in Entity v1.3.3.}
 
-\paragraph{Current deposition.}
-After the push, each particle's motion from $x^n$ to $x^{n+1}$ is deposited as a current
-$J_x$ on the cell edges. \textsc{Entity} uses a charge-conserving
-scheme~\citep{Esirkepov2001,Umeda2003}, so the discrete continuity equation
-$\partial_t\rho+\nabla\!\cdot\!\bm J=0$ holds to round-off. Gauss's law is then preserved
-automatically and no Poisson solve is needed, even though the code is electromagnetic.
+\paragraph{Charge and current on the grid.}
+After the push, each particle's motion during the step is recorded on the grid as an electric
+current $J_x$. \textsc{Entity} does this in a way that conserves charge
+exactly~\citep{Esirkepov2001,Umeda2003}: charge is never created or lost, so the continuity
+equation $\partial_t\rho+\partial_x J_x=0$ holds on the grid up to computer round-off. As a
+result, Gauss's law stays satisfied automatically. The code also smooths (\emph{filters})
+the current over neighboring grid points a few times per step, which further suppresses
+short-wavelength noise.
 \todo{check Entity docs for the deposition scheme at each shape order.}
 
-\paragraph{Field update.}
-Maxwell's equations are advanced on a staggered Yee mesh~\citep{Yee1966}, stable for
-$c\Delta t<\Delta x$ in 1D. In 1D with only $x$-motion, Amp\`ere's law reduces to
-$\partial_t E_x=-J_x/\varepsilon_0$, so the code is effectively electrostatic for this
-problem.
+\paragraph{Updating the field.}
+\textsc{Entity} solves the full Maxwell equations on a staggered grid (the Yee
+mesh~\citep{Yee1966}). To stay stable, light must not cross more than one cell per step,
+$c\Delta t<\Delta x$. In our one-dimensional problem with motion only along $x$ there is no
+magnetic field, and Amp\`ere's law reduces to $\partial_t E_x=-J_x/\varepsilon_0$. The current
+deposited by the particles therefore directly changes the electric field, and the problem
+behaves like a purely electrostatic one.
 
 \paragraph{Numerical heating.}
-PIC codes of this type conserve momentum but not energy. When the Debye length is
-unresolved, $\lambda_D\ll\Delta x$, particles couple to alias modes $k+2\pi n/\Delta x$ and the
-plasma heats until $\lambda_D\sim\Delta x$ (the finite-grid
-instability)~\citep{Langdon1970,Okuda1972}. Our beams are nearly cold, so this is the main
-source of spurious heating we expect, and its strength should fall with smoother shapes and
-finer grids. A thermal spread $v_{th}$ also lowers $\gamma$ below the cold value once
-$k v_{th}\sim\gamma$, so heating feeds back on the measured growth rate.
+A PIC code does not conserve energy exactly, so the plasma can slowly heat up even when no
+physical process heats it. The main cause is the grid. On a grid with spacing $\Delta x$, two waves whose wavenumbers differ by a multiple of
+$2\pi/\Delta x$ have exactly the same values at every grid point, so the grid cannot tell them
+apart. Short-wavelength particle noise can therefore masquerade as a longer wave (this is
+called \emph{aliasing}). This matters
+when the Debye length is much smaller than a cell, $\lambda_D\ll\Delta x$. In that case
+aliasing feeds energy into the particles, and the plasma heats until $\lambda_D$ grows to about
+$\Delta x$. This effect is known as the finite-grid instability~\citep{Langdon1970,Okuda1972}.
+Because our beams are nearly cold, it is the main source of artificial heating we expect, and
+it should be weaker for smoother particle shapes and finer grids. Heating also matters for the
+physics. Warm beams have a spread of velocities $v_{th}$, which smears out the bunching and
+lowers $\gamma$ below the cold value once $k v_{th}$ becomes comparable to $\gamma$.
 
 % ===========================================================================
 \section{Simulation setup}
 \label{sec:setup}
 
+\paragraph{Units.}
+The code uses \emph{code units}: speeds are measured in units of the speed of light ($c=1$),
+and lengths are measured in units chosen by the input file. A reference density $n_0$ defines a
+reference plasma frequency $\omega_{p0}$ and skin depth $d_0=c/\omega_{p0}$. We set $d_0=10$, so
+$\omega_{p0}=0.1$. What matters physically are dimensionless ratios like $\gamma/\wb$ and
+$k\vz/\wb$. The table lists both the raw code values and these ratios.
+
+\paragraph{Species.}
 We use the \textsc{Entity} PIC code~\citep{Entity} (v1.3.3, \texttt{streaming} problem
-generator, input \texttt{twostream.toml}) in one spatial dimension with periodic boundaries.
-The setup has four species: two electron beams with drift four-velocity $u_x=\pm0.1$, and two
-positron species with the pusher disabled, which act as the immobile neutralizing background.
-The input \texttt{densities = [0.5, 0.5]} sets the total density of each electron--positron
-pair, so each beam has $n_b=0.25\,n_0$. With $d_0=c/\omega_{p0}=10$ this gives
-$\wb=\omega_{p0}\sqrt{0.25}=0.05$, and Eq.~\eqref{eq:gmax} predicts
-$\gamma_{\max}=0.025$ at $k_{\max}\approx0.435$, i.e.\ $\lambda_{\max}\approx14.4$. The box
-$L=100$ holds about 7 wavelengths of the fastest mode, and the box mode $m=7$ sits at
-$k\vz/\wb=0.875$, close to the peak at $0.866$. The run lasts $\wb t=50$, about 25
-$e$-foldings at $\gamma_{\max}$, which covers growth from the noise floor through
-saturation. Table~\ref{tab:params} lists the baseline. Each scan varies one of $\ppc$,
-$\Delta x$, or the shape order and holds the others fixed. The baseline grid resolves the
-beam Debye length $\lambda_D=v_{th}/\wb=0.2$ with $\Delta x/\lambda_D\approx0.04$, so the
-resolution scan has to coarsen the grid by more than an order of magnitude to reach the
-regime where finite-grid heating appears.
+generator, input file \texttt{twostream.toml}) in one spatial dimension. The boundaries are
+periodic: a particle leaving the right edge re-enters on the left. The simulation contains four
+particle species. Two are the electron beams. The other two are positron species that are
+never moved, so they act as the fixed positive background that plays the role of the ions. The
+beam speed is set by the \emph{four-velocity} $u_x=\gamma_L v_x/c=\pm0.1$, where $\gamma_L$ is
+the relativistic Lorentz factor. At this low speed $\gamma_L\approx1$, so $\vz\approx0.1\,c$
+and the beams are essentially non-relativistic.
+
+\paragraph{Parameters.}
+The input \texttt{densities = [0.5, 0.5]} sets the combined density of each electron--positron
+pair, so each beam has $n_b=0.25\,n_0$. Then $\wb=\omega_{p0}\sqrt{0.25}=0.05$, and
+Eq.~\eqref{eq:gmax} predicts $\gamma_{\max}=0.025$ at $k_{\max}\approx0.435$, which is a
+wavelength of $\lambda_{\max}=2\pi/k_{\max}\approx14.4$.
+
+Because the box is periodic, only waves that fit a whole number $m$ of wavelengths into the box
+length $L=100$ can exist, with $k=2\pi m/L$. About 7 wavelengths of the fastest-growing wave
+fit in the box, and the $m=7$ mode has $k\vz/\wb=0.875$, very close to the theoretical peak at
+$0.866$. The run lasts $\wb t=50$, which is about 25 $e$-foldings at $\gamma_{\max}$. That is
+long enough to see the wave grow out of the noise and then saturate.
+
+Table~\ref{tab:params} lists the baseline settings. In each scan we change one of $\ppc$,
+$\Delta x$, or the shape and keep the others fixed. The baseline grid is very fine: the beam
+Debye length is $\lambda_D=v_{th}/\wb=0.2$, and a cell is only $\Delta x/\lambda_D\approx0.04$
+of that. To reach the regime $\lambda_D\ll\Delta x$ where finite-grid heating appears, the
+resolution scan therefore has to make the cells more than ten times larger.
 \todo{update if the production runs change any of these values.}
 
 \begin{table}[t]
   \centering
-  \caption{Baseline parameters from \texttt{twostream.toml} (code units, $c=1$).}
+  \caption{Baseline parameters from \texttt{twostream.toml}, in code units ($c=1$). The right
+  column gives the same quantity as a dimensionless ratio.}
   \label{tab:params}
   \small
   \begin{tabular}{@{}lll@{}}
@@ -212,17 +314,19 @@ regime where finite-grid heating appears.
 \end{table}
 
 \paragraph{Measuring $\gamma(k)$.}
-At each output step we Fourier transform $E_x(x,t)$ in space to obtain $|\tilde E_k(t)|$ for
-every box mode. During the linear phase $\ln|\tilde E_k|$ is a straight line of slope
-$\gamma(k)$; we fit it over the window between the noise floor and saturation, and estimate
-the uncertainty from the spread of fits across window choices.
-Figure~\ref{fig:growth} shows this for the fastest mode.
+At each output time we take the Fourier transform of $E_x(x,t)$ in $x$. This splits the field
+into the allowed box waves and gives the amplitude $|\tilde E_k(t)|$ of each one. While a wave
+grows exponentially, $|\tilde E_k|\propto e^{\gamma t}$, so a plot of $\ln|\tilde E_k|$ versus
+$t$ is a straight line with slope $\gamma(k)$. We fit a line over the time window after the wave
+has risen above the noise and before it saturates. To estimate the uncertainty, we repeat the
+fit for several reasonable choices of window and take the spread of the results.
+Figure~\ref{fig:growth} shows this for the fastest-growing wave.
 
 \begin{figure}[t]
   \centering
   \figorbox{growth_mode.pdf}{\columnwidth}{$\ln|\tilde E_k(t)|$ for $k\approx k_{\max}$, with fit}
-  \caption{Amplitude of the fastest-growing mode versus time. The dashed line is the fit
-  over the linear phase. \todo{caption details.}}
+  \caption{Amplitude of the fastest-growing wave versus time. The dashed line is the
+  straight-line fit during exponential growth; its slope is $\gamma$. \todo{caption details.}}
   \label{fig:growth}
 \end{figure}
 
@@ -231,31 +335,33 @@ Figure~\ref{fig:growth} shows this for the fastest mode.
 \label{sec:results}
 
 \paragraph{Growth rate versus wavenumber.}
-Figure~\ref{fig:gammak} compares the measured $\gamma(k)$ with Eq.~\eqref{eq:gamma}.
+Figure~\ref{fig:gammak} compares the measured $\gamma(k)$ with the theory of
+Eq.~\eqref{eq:gamma}.
 \todo{describe agreement, value of $\gamma_{\max}/\wb$ and $k_{\max}\vz/\wb$, behavior near
 the cutoff $k\vz=\sqrt2\,\wb$.}
 
 \begin{figure}[t]
   \centering
   \figorbox{gamma_vs_k.pdf}{\columnwidth}{measured $\gamma(k)/\wb$ vs.\ $k\vz/\wb$ with theory}
-  \caption{Measured growth rate (points) against the cold-beam dispersion relation,
+  \caption{Measured growth rate (points) compared with the cold-beam theory,
   Eq.~\eqref{eq:gamma} (line). \todo{caption details.}}
   \label{fig:gammak}
 \end{figure}
 
-\paragraph{Numerical convergence.}
-Figure~\ref{fig:conv} shows how the error in $\gamma_{\max}$ and the late-time energy drift
-depend on $\ppc$, $\Delta x$, and shape order. Sampling noise sets an initial field level that
-scales as $\ppc^{-1/2}$, which shortens the usable linear window but should not change the
-slope. Under-resolving $\lambda_D$ should instead show up as heating that warms the beams and
-lowers $\gamma$.
+\paragraph{Effect of the numerical settings.}
+Figure~\ref{fig:conv} shows how the error in $\gamma_{\max}$ and the drift in total energy
+depend on $\ppc$, $\Delta x$, and particle shape. We expect two different kinds of behavior.
+Fewer particles mean a louder initial noise level, which scales as $\ppc^{-1/2}$. That should
+shorten the window of clean exponential growth without changing its slope. A grid that is too
+coarse to resolve $\lambda_D$ should instead heat the beams, and warmer beams grow more slowly,
+so in that case the measured $\gamma$ itself should drop.
 \todo{replace expectations with what the runs show.}
 
 \begin{figure}[t]
   \centering
   \figorbox{convergence.pdf}{\columnwidth}{error in $\gamma_{\max}$ and energy drift vs.\ $\ppc$, $\Delta x$, shape}
-  \caption{Convergence of the measured $\gamma_{\max}$ and total-energy drift with numerical
-  parameters. \todo{caption details.}}
+  \caption{How the measured $\gamma_{\max}$ and the drift in total energy change with the
+  numerical settings. \todo{caption details.}}
   \label{fig:conv}
 \end{figure}
 
