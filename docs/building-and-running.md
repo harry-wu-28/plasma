@@ -36,6 +36,19 @@ with `mca_btl_tcp_frag_send: writev error ... Bad address` and the run hangs at 
 `build_pp` was rebuilt with OFF on 2026-07-07; **`build_pp_IC` still has it ON and must be
 reconfigured before the next pp_IC run.**
 
+**MPI must be pointed at explicitly on a fresh build dir** (hit 2026-11-16). Without the
+openmpi module (which must not be loaded), `find_package(MPI)` fails at configure with
+`Could NOT find MPI (missing: MPI_C_FOUND MPI_CXX_FOUND)`. The existing build dirs carry it in
+their cache; for a new one add
+`-DMPI_C_COMPILER=/optnfs/el8/openmpi/5.0/bin/mpicc -DMPI_CXX_COMPILER=/optnfs/el8/openmpi/5.0/bin/mpicxx`.
+`twostream/scripts/build_twostream.sh` omits these; `build_twostream_s1` was built by seeding
+them into its cache first. The streaming pgen compiles against the v1.3.3rc checkout (CUDA build).
+
+**GPU GRES name changed** (hit 2026-11-16). `gpuq` now advertises `gpu:nvidia_l40s` (node
+`l40sx8`); `--gres=gpu:l40s:1` is rejected with "Requested node configuration is not
+available". All repo SLURM scripts still say `gpu:l40s`; until they are updated, override at
+submit time: `sbatch --gres=gpu:nvidia_l40s:1 <script>` (twostream baseline job 11088064).
+
 **Host compiler landmine** (hit 2026-07-07): the login shell exports
 `NVCC_WRAPPER_DEFAULT_COMPILER=/opt/rh/gcc-toolset-13/root/usr/bin/g++` (GCC 13), and CUDA
 12.0's `host_config.h` rejects GCC > 12 (`#error -- unsupported GNU version!`). Override to
