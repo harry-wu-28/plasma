@@ -1,0 +1,131 @@
+# Inverse Compton validation: single-electron isotropic Compton spectrum vs
+# Blumenthal & Gould 1970 (Rev. Mod. Phys. 42, 237), based on Jones 1968
+# (Phys. Rev. 167, 1159). This is the IC-side analog of the bw_aharonian
+# BW validation (radiative/pp/runs/bw_aharonian) — same idea, same pgen
+# family (pp_IC beam setup, cloned unmodified into pgens/IC), opposite
+# module isolated.
+#
+# Setup: a cold, monoenergetic, monodirectional e-/e+ beam at Lorentz
+# factor gamma0 immersed in an isotropic monoenergetic soft-photon bath
+# (photonEnergy). InitPrtls overwrites ux1=gamma0 for every particle, so
+# this matches the "single electron of fixed gamma" assumption in the
+# B&G/Jones formula exactly. BW is off so photons (species 3) accumulate
+# without being reabsorbed.
+#
+# Regime: Gamma = 4*photonEnergy*gamma0 = gamma0/gammaKN is the paper's
+# own regime parameter (their eq. 19 f(Gamma, eps')). With
+# photonEnergy=0.01 -> gammaKN=25, gammaSwitch=switchToKN*gammaKN=2.5.
+# gamma0=200 -> Gamma=8, close to Del Gaudio+ 2020's (arXiv:2004.11404)
+# Gamma=10 "intermediate/KN" validation point, and already sits well
+# above gammaSwitch so the run mostly exercises the discrete KN branch
+# (eqns 18/19/21/23/27/28 in pgen.hpp) rather than the continuous
+# Thomson-cooling branch.
+#
+# This is a short FIRST PASS: runtime=100 (vs pp_IC's production
+# runtime=1000) to check the pipeline compiles/runs cleanly and to see
+# the actual scattering fraction before tuning OpticalDepth/runtime for
+# the real single-scattering-statistics comparison (want most beam
+# particles to scatter at most once, so the accumulated photon spectrum
+# matches the single-collision B&G/Jones kernel rather than a
+# multi-generation, beam-cooled composite — mirrors how bw_aharonian
+# tuned runtime for ~10% photon conversion).
+
+[simulation]
+  name    = "ic_blumenthal_gould"
+  engine  = "srpic"
+  runtime = 100.0
+
+[grid]
+  resolution = [512, 512]
+  extent     = [[-128.0, 128.0], [-128.0, 128.0]] # dx = 0.5, same as bw_aharonian
+
+  [grid.metric]
+    metric = "minkowski"
+
+  [grid.boundaries]
+    fields    = [["PERIODIC"], ["PERIODIC"]]
+    particles = [["PERIODIC"], ["PERIODIC"]]
+
+[scales]
+  larmor0    = 1.0
+  skindepth0 = 1.0
+
+[algorithms]
+  current_filters = 8
+
+  [algorithms.timestep]
+    CFL = 0.5
+
+  [algorithms.fieldsolver]
+    enable = false
+
+[particles]
+  ppc0 = 8.0 # 512^2 * 8 = 2.1e6 per beam species (matches toml_pp_IC.toml default)
+
+  [[particles.species]]
+    label    = "e-_p"
+    mass     = 1.0
+    charge   = -1.0
+    maxnpart = 5e6
+
+  [[particles.species]]
+    label    = "e+_p"
+    mass     = 1.0
+    charge   = 1.0
+    maxnpart = 5e6
+
+  [[particles.species]]
+    label    = "phot"
+    mass     = 0.0
+    charge   = 0.0
+    maxnpart = 5e6
+
+  [[particles.species]]
+    label    = "e-_sec"
+    mass     = 1.0
+    charge   = -1.0
+    maxnpart = 1e5 # stays empty: IsBW = false
+
+  [[particles.species]]
+    label    = "e+_sec"
+    mass     = 1.0
+    charge   = 1.0
+    maxnpart = 1e5 # stays empty: IsBW = false
+
+[setup]
+  temperature  = 0.0625 # unused (InitPrtls overwrites ux1=gamma0 unconditionally); required by pgen constructor
+  OpticalDepth = 1.0    # Thomson depth of the bath across Lx; sets the null-collision rate
+  photonEnergy = 0.01   # <-- isotropic soft bath energy eps_0 [m_e c^2]; gammaKN = 1/(4*photonEnergy) = 25
+  switchToKN   = 0.1    # gammaSwitch = 0.1*gammaKN = 2.5; this *is* the paper's Gamma=0.1 threshold
+  gamma0       = 200.0  # <-- beam Lorentz factor; Gamma = 4*photonEnergy*gamma0 = 8 (intermediate/KN regime)
+  IsIC = true
+  IsBW = false           # pure IC test: no Breit-Wheeler
+
+[output]
+  format        = "BPFile"
+  interval_time = 10.0
+
+  [output.fields]
+    # species 4/5 stay empty (BW off); species 1/2 carry the beam, 3 the emitted photons
+    quantities = ["N_1", "N_2", "N_3", "V_1", "V_2"]
+
+  [output.particles]
+    enable  = true
+    species = [1, 2, 3]
+    stride  = 1 # full dump: need precise photon energies for the spectrum comparison
+
+  [output.spectra]
+    enable   = true # pp_IC's injector sets weight=1 (unlike pp's zero-weight bug), so this should be usable directly
+    e_min    = 0.001
+    e_max    = 250.0
+    n_bins   = 100
+    log_bins = true
+
+  [output.stats]
+    enable = false
+
+[diagnostics]
+  colored_stdout = false
+
+[checkpoint]
+  interval = 10000
