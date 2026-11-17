@@ -7,7 +7,7 @@ const path = require("path");
 const pptxgen = require("pptxgenjs");
 
 const HERE = __dirname;
-const OUT = path.join(HERE, "twostream_talk.pptx");
+const OUT = process.env.DECK_OUT || path.join(HERE, "twostream_talk.pptx");   // DECK_OUT: test builds elsewhere
 const md = fs.readFileSync(path.join(HERE, "content.md"), "utf8");
 
 // Quiet-start figures: use the full-run set once content.md describes the full run
@@ -37,6 +37,7 @@ function parseSections(text) {
       if (/^\*\*Speaker notes\*\*/.test(line)) { mode = "n"; continue; }
       if (/^\*\*(Figure|Title options)/.test(line) || /^---/.test(line)) { mode = null; continue; }
       if (mode === "b" && line.startsWith("- ")) sec.bullets.push(line.slice(2));
+      else if (mode === "b" && /^\s+\S/.test(line) && sec.bullets.length) sec.bullets.push("@ " + line.trim());
       if (mode === "t" && line.startsWith("|") && !/^\|[-| ]+\|$/.test(line)) {
         sec.table.push(line.split("|").slice(1, -1).map((c) => c.trim()));
       }
@@ -54,8 +55,34 @@ function parseQA(text) {
   return text.slice(i).split("\n").slice(1).join("\n").trim()
     .replace(/\*\*(Q\d+\.[^*]*)\*\*\n/g, "$1 ").replace(/\n(?!\n)/g, " ").replace(/\n\n+/g, "\n\n");
 }
-const S = parseSections(md);
-const QA = parseQA(md);
+const RAW = parseSections(md);
+const num = (k) => +k.slice(1);
+let MAIN = Object.keys(RAW).filter((k) => k[0] === "S").sort((a, b) => num(a) - num(b));
+let BACK = Object.keys(RAW).filter((k) => k[0] === "B").sort((a, b) => num(a) - num(b));
+// The user chose (2026-11-17) to keep "one time step in detail" in the main talk, right after
+// "the loop", even though content.md lists it as a backup. Once content.md has it as a main slide
+// this does nothing.
+const PROMOTE = { title: /one time step in detail/i, after: /the loop/i };
+if (!MAIN.some((k) => PROMOTE.title.test(RAW[k].title))) {
+  const b = BACK.find((k) => PROMOTE.title.test(RAW[k].title));
+  const a = MAIN.findIndex((k) => PROMOTE.after.test(RAW[k].title));
+  if (b && a >= 0) { BACK = BACK.filter((k) => k !== b); MAIN.splice(a + 1, 0, b); }
+}
+// Renumber "slide N" and "BN" references in content.md's text to the deck's final order.
+const slideNo = {}; MAIN.forEach((k, i) => { if (k[0] === "S") slideNo[num(k)] = i + 1; });
+const backNo = {}; BACK.forEach((k, i) => { backNo[num(k)] = i + 1; });
+const promotedB = MAIN.filter((k) => k[0] === "B").map(num);
+const renum = (t) => t
+  .replace(/\b([Ss]lides?) (\d+)(\s*[–-]\s*)?(\d+)?/g, (m, w, a, dash, b) =>
+    `${w} ${slideNo[+a] ?? a}${b ? (dash || "–") + (slideNo[+b] ?? b) : ""}`)
+  .replace(/\b(?:([Bb]ackup) )?B(\d+)\b/g, (m, w, n) => promotedB.includes(+n)
+    ? `slide ${MAIN.indexOf("B" + n) + 1}` : `${w ? w + " " : ""}B${backNo[+n] ?? n}`);
+const S = {};
+for (const [k, sec] of Object.entries(RAW)) {
+  S[k] = { ...sec, bullets: sec.bullets.map(renum), notes: renum(sec.notes),
+    table: sec.table.map((r) => r.map(renum)) };
+}
+const QA = renum(parseQA(md));
 const need = (k) => { if (!S[k]) throw new Error(`content.md has no section ${k}`); return S[k]; };
 
 // ---- plain style --------------------------------------------------------------
@@ -97,11 +124,15 @@ function rich(str, opts = {}) {
   push(buf);
   return out;
 }
+// An item starting with "@ " is an equation line: no bullet, indented under the bullet above.
 function bulletRuns(items, size) {
   const runs = [];
   items.forEach((t, j) => {
-    const r = rich(t, { fontSize: size, color: INK });
-    r[0].options.bullet = true;
+    const eq = t.startsWith("@ ");
+    const r = rich(eq ? t.slice(2) : t, { fontSize: size, color: INK });
+    // invisible bullet (no-break space) keeps the bullet indent; one level deeper than the text
+    if (eq) { r[0].options.bullet = { code: "00A0" }; r[0].options.indentLevel = 1; }
+    else r[0].options.bullet = true;
     if (j < items.length - 1) r[r.length - 1].options.breakLine = true;
     runs.push(...r);
   });
@@ -130,16 +161,16 @@ const WARPX = "WarpX documentation (warpx.readthedocs.io), © 2018 The Regents o
 
 // One slide = title + bullets on the left + optional figure on the right (or a big figure
 // with bullets beside it). Keeps every slide the same plain layout.
-function slide(sec, { fig, cap, capFull = false, figW = 7.6, bulletSize = 20, notes, video, master = "PLAIN" } = {}) {
+function slide(sec, { fig, cap, capFull = false, figW = 7.6, figH = 5.3, bulletH = 5.4, bulletSize = 20, textSize = 24, notes, video, master = "PLAIN" } = {}) {
   const s = pres.addSlide({ masterName: master });
   s.addText(rich(sec.title), { placeholder: "title" });
   const top = 1.4;
   if (!fig) {
-    s.addText(bulletRuns(sec.bullets, 24), { x: MX, y: top, w: W - 2 * MX, h: 5.4, fontFace: FONT,
+    s.addText(bulletRuns(sec.bullets, textSize), { x: MX, y: top, w: W - 2 * MX, h: 5.4, fontFace: FONT,
       valign: "top", margin: 0, paraSpaceAfter: 14, isTextBox: true });
   } else {
     const fx = W - MX - figW;
-    const box = fitBox(fig, { x: fx, y: top, w: figW, h: 5.3 });
+    const box = fitBox(fig, { x: fx, y: top, w: figW, h: figH });
     if (video) {
       s.addMedia({ type: "video", path: video, ...box,
         cover: "data:image/png;base64," + fs.readFileSync(fig).toString("base64") });
@@ -147,7 +178,7 @@ function slide(sec, { fig, cap, capFull = false, figW = 7.6, bulletSize = 20, no
       s.addImage({ path: fig, ...box, altText: sec.title });
     }
     if (cap) caption(s, cap, box, capFull);
-    s.addText(bulletRuns(sec.bullets, bulletSize), { x: MX, y: top, w: fx - MX - 0.3, h: 5.4,
+    s.addText(bulletRuns(sec.bullets, bulletSize), { x: MX, y: top, w: fx - MX - 0.3, h: bulletH,
       fontFace: FONT, valign: "top", margin: 0, paraSpaceAfter: 10, isTextBox: true });
   }
   s.addNotes(notes ?? sec.notes);
@@ -155,9 +186,43 @@ function slide(sec, { fig, cap, capFull = false, figW = 7.6, bulletSize = 20, no
 }
 
 // =============================================================================
-// 1. Title (plain, centered)
-{
-  const sec = need("S1");
+// Figures and extras, matched to content.md sections by title (robust to renumbering).
+const VIDEO_NOTE = " [Movie: click it to play, 15 s, quiet-start run t = 0 to 70/ω_p. Flat beams until about t = 10, growth, then vortices from about t = 27. The last ~3 s (t = 40 to 70) are fast-forwarded 3x, shown only by the time counter; say so. If it doesn't play, talk over the still (t = 0, 20, 33: the last panel is a few plasma periods after growth stops at ~27, when the vortices are fully formed).]";
+const Q = ", quiet-start run";
+const FIGS = [
+  [/^the math/i, { textSize: 20 }],   // text-only, but long: smaller font so it fits
+  [/particles and a grid/i, { fig: SRC("warpx_pic_particles_grid.png"), cap: "Figure (cropped): " + WARPX, capFull: true, figW: 4.6 }],
+  [/the loop/i, { fig: SRC("warpx_pic_cycle.png"), cap: "Figure: " + WARPX, capFull: true, figW: 7.2 }],
+  [/what the electrons do/i, { fig: FIG("phase_space.png"), video: FIG("phase_space.mp4"), cap: MINE + Q + ". Click to play.", figW: 8.2, bulletSize: 18 }],
+  [/grows exponentially/i, { fig: QFIG("growth_fastest_mode.png"), cap: MINE + Q, figW: 8.2, bulletSize: 18 }],
+  [/grows in place/i, { fig: QFIG("spacetime_Ex.png"), cap: MINE + Q, figW: 8.2, bulletSize: 18 }],
+  [/growth-rate curve/i, { fig: QFIG("growth_rate_vs_k.png"), cap: MINE + Q, figW: 8.0, figH: 4.1, bulletH: 4.4, bulletSize: 17, peakTable: true }],
+  [/graphical method/i, { fig: FIG("dispersion_stable_unstable.png"), cap: "Figure: Chen's dispersion relation, plotted by me" }],
+  [/trapped electrons/i, { fig: FIG("trapping_separatrix.png"), cap: MINE + Q }],
+  [/beams flatten/i, { fig: FIG("fv_plateau.png"), cap: MINE + Q }],
+  [/starting positions matter/i, { fig: QFIG("gamma_k_quiet_vs_random.png"), cap: MINE + Q }],
+  [/random-start numbers/i, { fig: FIG("random_start/growth_rate_vs_k.png"), cap: MINE + ", random-start run" }],
+  [/noise made visible/i, { fig: QFIG("spacetime_Ex_normalized.png"), cap: MINE + Q }],
+];
+const extrasFor = (title) => (FIGS.find(([re]) => re.test(title)) || [null, {}])[1];
+
+// Peak growth rate and where it occurs, theory vs simulation (added at the user's request).
+// Theory: Chen, cold symmetric beams. Simulation: box mode m = 7, the box wavelength closest
+// to the theory peak; kv0/omega_p uses the same normalization as the figure.
+function peakTable(s) {
+  const hd = (t) => ({ text: rich(t, { fontSize: 18, bold: true }), options: { fill: { color: "EEEEEE" } } });
+  const cell = (t) => ({ text: rich(t, { fontSize: 18 }) });
+  s.addTable([
+    [hd(""), hd("Maximum growth rate γ_max"), hd("At wavenumber k")],
+    [{ text: "Theory (Chen)", options: { bold: true } }, cell("ω_p/(2√2) ≈ 0.354 ω_p"),
+      cell("kv_0 = √(3/8) ω_p ≈ 0.612 ω_p  (k ≈ 6.2 ω_p/c)")],
+    [{ text: "Simulation", options: { bold: true } }, cell("0.339 ± 0.014 ω_p"),
+      cell("kv_0 ≈ 0.624 ω_p  (k ≈ 6.3 ω_p/c), box wave m = 7")],
+  ], { x: MX, y: 5.95, w: W - 2 * MX, colW: [2.1, 3.6, W - 2 * MX - 5.7], fontFace: FONT, fontSize: 18,
+    color: INK, rowH: 0.34, valign: "middle", margin: [0, 0.08, 0, 0.08],
+    border: { type: "solid", color: "999999", pt: 1 } });
+}
+function titleSlide(sec) {
   const [main, sub] = sec.title.split(/:\s*/, 2);
   const s = pres.addSlide({ masterName: "PLAIN" });
   s.addText(main, { x: MX, y: 2.2, w: W - 2 * MX, h: 1.0, fontFace: FONT, fontSize: 40, bold: true,
@@ -168,14 +233,7 @@ function slide(sec, { fig, cap, capFull = false, figW = 7.6, bulletSize = 20, no
     fontSize: 20, color: GREY, align: "center", margin: 0, isTextBox: true });
   s.addNotes(sec.notes);
 }
-// 2. Two beams, and what Chen predicts (text only)
-slide(need("S2"));
-// 3-4. How PIC works (sourced WarpX figure)
-slide(need("S3"), { fig: SRC("warpx_pic_particles_grid.png"), cap: "Figure (cropped): " + WARPX, capFull: true, figW: 4.6 });
-slide(need("S4"), { fig: SRC("warpx_pic_cycle.png"), cap: "Figure: " + WARPX, capFull: true, figW: 7.2 });
-// 5. Setup: bullets + plain table
-{
-  const sec = need("S5");
+function setupSlide(sec) {
   const s = pres.addSlide({ masterName: "PLAIN" });
   s.addText(rich(sec.title), { placeholder: "title" });
   s.addText(bulletRuns(sec.bullets, 20), { x: MX, y: 1.3, w: W - 2 * MX, h: 1.6, fontFace: FONT,
@@ -187,37 +245,27 @@ slide(need("S4"), { fig: SRC("warpx_pic_cycle.png"), cap: "Figure: " + WARPX, ca
     border: { type: "solid", color: "999999", pt: 1 } });
   s.addNotes(sec.notes);
 }
-// 6. Phase-space movie (random-start run), still frame as poster
-{
-  const vid = FIG("phase_space.mp4");
-  slide(need("S6"), { fig: FIG("phase_space.png"), video: fs.existsSync(vid) ? vid : null,
-    cap: MINE + ", random-start run. Click to play.", figW: 8.2, bulletSize: 18,
-    notes: need("S6").notes + (fs.existsSync(vid) ? " [Movie: click it to play, 11 s, whole random-start run t = 0 to 70/ω_p. After t = 20 it fast-forwards 3x; say so. If it doesn't play, talk over the still.]" : "") });
-}
-// 7-9. Quiet-start results
-slide(need("S7"), { fig: QFIG("growth_fastest_mode.png"), cap: MINE + ", quiet-start run", figW: 8.2, bulletSize: 18 });
-slide(need("S8"), { fig: QFIG("spacetime_Ex.png"), cap: MINE + ", quiet-start run", figW: 8.2, bulletSize: 18 });
-slide(need("S9"), { fig: QFIG("growth_rate_vs_k.png"), cap: MINE + ", quiet-start run", figW: 8.6, bulletSize: 18 });
-// 10. What we saw (text only); likely Q&A goes in its notes, after the spoken part
-{
-  const sec = need("S10");
-  slide(sec, { notes: sec.notes + (QA ? "\n\n----- Likely Q&A (not part of the talk) -----\n\n" + QA : "") });
-}
 
-// =============================================================================
-// Backup slides: same plain layout, "Backup:" in the title
-const backup = (k, opts = {}) => {
-  const sec = { ...need(k) };
-  sec.title = `Backup ${k}: ${sec.title}`;
-  return slide(sec, { bulletSize: 18, figW: 8.0, master: "PLAIN_BACKUP", ...opts });
-};
-backup("B1", { fig: FIG("dispersion_stable_unstable.png"), cap: "Figure: Chen's dispersion relation, plotted by me" });
-backup("B2", { fig: FIG("trapping_separatrix.png"), cap: MINE + ", random-start run" });
-backup("B3", { fig: FIG("fv_plateau.png"), cap: MINE + ", random-start run" });
-backup("B4", { fig: QFIG("gamma_k_quiet_vs_random.png"), cap: MINE + ", quiet-start run" });
-backup("B5", { fig: FIG("random_start/growth_rate_vs_k.png"), cap: MINE + ", random-start run" });
-backup("B6", { fig: QFIG("spacetime_Ex_normalized.png"), cap: MINE + ", quiet-start run" });
-backup("B7");
-backup("B8");
+// ---- main talk, in content.md order (plus the promoted slide) ----------------
+MAIN.forEach((k, i) => {
+  const sec = need(k);
+  const last = i === MAIN.length - 1;
+  if (i === 0) return titleSlide(sec);
+  if (sec.table.length && /setup/i.test(sec.title)) return setupSlide(sec);
+  const ex = { ...extrasFor(sec.title) };
+  if (ex.video && !fs.existsSync(ex.video)) delete ex.video;
+  let notes = sec.notes;
+  if (ex.video) notes += VIDEO_NOTE;
+  if (last && QA) notes += "\n\n----- Likely Q&A (not part of the talk) -----\n\n" + QA;   // after the spoken part
+  const s = slide(sec, { ...ex, notes });
+  if (ex.peakTable) peakTable(s);
+});
 
-pres.writeFile({ fileName: OUT }).then((f) => console.log("wrote", f, "| quiet figures:", QUIET || "full run"));
+// ---- backups: same plain layout, "Backup BN:" in the title --------------------
+BACK.forEach((k, i) => {
+  const sec = { ...need(k), title: `Backup B${i + 1}: ${need(k).title}` };
+  slide(sec, { bulletSize: 18, figW: 8.0, master: "PLAIN_BACKUP", ...extrasFor(need(k).title) });
+});
+
+pres.writeFile({ fileName: OUT }).then((f) => console.log("wrote", f, "| quiet figures:", QUIET || "full run",
+  "| main:", MAIN.join(","), "| backup:", BACK.join(",")));

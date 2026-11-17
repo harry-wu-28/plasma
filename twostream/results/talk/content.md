@@ -4,17 +4,20 @@
 exponentially out of noise, it grows in place without traveling, and the growth rate of each
 wave traces out Chen's curve. The goal is to visualize the physics, not to run a precision test.
 
-10-minute talk + 10 minutes Q&A. Main slides 1–10 (~1,400 words of notes), then backup slides
+Talk (~12 min) + Q&A. Main slides 1–12 (~1,755 words of notes), then backup slides
 B1–B8, then likely Q&A. Figures are in `twostream/results/talk/figures/` (random-start versions in
 `twostream/results/talk/figures/random_start/`).
 
 **Two runs, same grid:**
 - *Quiet start* (job 11093069, `pgens/streaming_quiet`, ppc0 = 64 = 16 per cell per beam,
-  245,760 steps; figures cut at saturation, t ≈ 26.8/ω_p): particles start evenly spaced. It gives
-  the growth, space-time and γ(k) figures (slides 7–9, B4, B6).
+  245,760 steps to t ≈ 70/ω_p, 1 h 31 min on 1 node × 32 threads): particles start evenly
+  spaced. It gives every figure in the main talk and B1–B4, B6: the movie (to 40/ω_p, then 3×
+  fast-forward to 70/ω_p), phase-space stills at t = 0, 20, 33/ω_p, growth, space-time and
+  γ(k) (cut at saturation, t ≈ 26.8/ω_p), the trapping boundary at 33/ω_p (about 6/ω_p after
+  saturation), and f(v) (late average t = 63–70/ω_p).
 - *Random start* (baseline, CPU job 11088180, ppc0 = 16 = 4 per cell per beam, to t ≈ 70/ω_p):
-  particles start at random positions. It gives the phase-space video, trapping and f(v) figures
-  (slide 6, B2, B3) and the "before" numbers (B5).
+  particles start at random positions. Used only for the "before" numbers (B5) and the
+  comparison story in B4.
 - Seed noise vs the random start: 48× lower overall (+3.9 clean e-folds). Evenly spaced positions
   alone give 28× (measured in smoke job 11092712, both at ppc0 = 16); the 4× extra particles give a
   further 1.8×. The smoke run is not otherwise used.
@@ -67,7 +70,44 @@ makes sense: the two beams are mirror images, so there's no preferred direction 
 
 ---
 
-## Slide 3: How PIC works: particles and a grid
+## Slide 3: The math: fastest growth rate and its wavelength
+
+**Bullets**
+- Dispersion relation, two cold beams at ±v₀ (each with half the electrons):
+  1 = ½ω_p²[ 1/(ω − kv₀)² + 1/(ω + kv₀)² ]   →   (ω² − k²v₀²)² = ω_p²(ω² + k²v₀²)
+- For kv₀ < ω_p one root has ω² < 0, so ω = iγ: the wave grows, with
+  γ² = (ω_p/2)√(ω_p² + 8k²v₀²) − k²v₀² − ω_p²/2
+- Fastest growth: set dγ²/d(k²v₀²) = 0, which gives k²v₀² = (3/8) ω_p²:
+  kv₀ = √(3/8) ω_p ≈ 0.612 ω_p,   γ_max = ω_p/(2√2) ≈ 0.354 ω_p
+- Peak wavelength (v₀ ≈ 0.1c): λ = 2π/k ≈ 10.3 v₀/ω_p ≈ 1.02 c/ω_p
+- Periodic box, L ≈ 7.0 c/ω_p: only waves that fit a whole number of times exist, k_m = 2πm/L
+  L/λ ≈ 6.9 → nearest is m = 7: kv₀ ≈ 0.624 ω_p, γ ≈ 0.353 ω_p (m = 6: 0.347, m = 8: 0.342)
+
+**Figure:** none (equations)
+
+**Speaker notes**
+Here's where the 0.354 comes from. Start from the dispersion relation for two cold beams, each
+holding half the electrons. Clearing the fractions gives a quadratic in omega squared. One of
+its roots is negative whenever k v0 is less than omega_p, so omega is imaginary, omega equals i
+gamma, and the wave grows. That root gives gamma squared as a function of k. To find the fastest
+wave, I set the derivative with respect to k squared v0 squared to zero. That gives k v0 equals
+the square root of three eighths times omega_p, about 0.61, and plugging back in, gamma max is
+omega_p over two root two, about 0.354 omega_p. Turning k into a wavelength: lambda is 2 pi over
+k, about 10 v0 over omega_p, which for beams at a tenth of the speed of light is about one c
+over omega_p. But my box is periodic, so only waves that fit a whole number of times can exist.
+The box is about 7.0 c over omega_p long, so the theory peak would fit about 6.9 times.
+(If asked where 7.0 comes from: the box is 100 code units long, and the code's units set c over
+omega_p to 10 for a reference density. My electrons are half that density, and omega_p goes as
+the square root of density, so c over omega_p stretches by root two to about 14.1 units. A small
+relativistic correction for the moving beams makes it about 14.2, and 100 divided by that is
+about 7.0.) The
+nearest allowed wave is mode 7, seven wavelengths across the box. Its theoretical growth rate is
+0.353, almost exactly the maximum, while its neighbours, modes 6 and 8, are a bit slower. That's
+why mode 7 is the fastest-growing wave in the simulation.
+
+---
+
+## Slide 4: How PIC works: particles and a grid
 
 **Bullets**
 - Too many real electrons to follow one by one
@@ -75,7 +115,7 @@ makes sense: the two beams are mirror images, so there's no preferred direction 
 - Electric field is stored only at points on a grid
 - Particles move freely between grid points
 
-**Figure:** sketch of dots (particles) scattered over a row of grid points
+**Figure:** `assets/sourced/warpx_pic_particles_grid.png` (cropped). Credit: WarpX documentation (warpx.readthedocs.io), © 2018 The Regents of the University of California, BSD-3-Clause-LBNL license
 
 **Speaker notes**
 So how does the simulation work? A real plasma has far too many electrons to follow one at a
@@ -89,7 +129,7 @@ is passing information back and forth between the particles and the grid.
 
 ---
 
-## Slide 4: How PIC works: the loop
+## Slide 5: How PIC works: the loop
 
 **Bullets**
 - Deposit: particle motion → current on the grid
@@ -97,7 +137,7 @@ is passing information back and forth between the particles and the grid.
 - Interpolate: field on the grid → force on each particle
 - Push: Newton's law moves each particle; repeat each time step
 
-**Figure:** loop diagram, deposit → field solve → interpolate → push
+**Figure:** `assets/sourced/warpx_pic_cycle.png`. Credit: WarpX documentation (warpx.readthedocs.io), © 2018 The Regents of the University of California, BSD-3-Clause-LBNL license
 
 **Speaker notes**
 Every time step, the code goes around this loop. First, deposit: each particle's motion is
@@ -105,19 +145,43 @@ turned into electric current on the nearby grid points. Second, field solve: the
 that current to update the electric field on the grid. Third, interpolate: it reads the field
 back at each particle's position, so every particle knows what force it feels. Fourth, push:
 Newton's law gives each particle a new velocity and position. Then it starts over. Each step
-is a tiny slice of time, so my main run goes around this loop about 250,000 times, roughly an
-hour and a half on one 32-core node. (Approximate: the run was still finishing when this was
-written.) Nothing about the two-stream instability is built into these
+is a tiny slice of time, so my main run went around this loop about 250,000 times, which took
+an hour and a half on one 32-core node. Nothing about the two-stream instability is built into these
 rules. If the instability shows up, it comes from the particles and fields alone.
 
 ---
 
-## Slide 5: The simulation setup
+## Slide 6: How PIC works: one time step in detail
+
+**Bullets**
+- Deposit: particle motion → current J on the grid (charge-conserving "zigzag" scheme), smoothed over neighboring cells (4 passes)
+- Field solve, 1D Ampère's law: E^{n+1} = E^{n} − (Δt/ε₀) J^{n+½}
+- Interpolate: field at each particle = distance-weighted average of its 2 nearest grid points ("cloud-in-cell")
+- Push (Boris, which is leapfrog in 1D): v^{n+½} = v^{n−½} + (q/m) E^{n} Δt,   x^{n+1} = x^{n} + v^{n+½} Δt
+- Time step: light crosses ½ a cell per step (CFL = 0.5) → ω_pΔt ≈ 3×10⁻⁴ (leapfrog only needs ω_pΔt < 2)
+
+**Figure:** none (equations)
+
+**Speaker notes**
+Here's what each step actually computes in my run. Deposit: each particle's motion becomes
+current on the nearby grid points, using a scheme that conserves charge exactly, so Gauss's law
+stays satisfied. The current is then smoothed over neighboring cells to cut noise. Field solve:
+in one dimension, Ampère's law just says the electric field changes by minus the current over
+epsilon naught, times the time step. Interpolate: the field felt by a particle is a weighted
+average of the two nearest grid points, weighted by distance; that's the cloud-in-cell shape.
+Push: Entity uses the Boris pusher, which in 1D with no magnetic field is the leapfrog scheme.
+Velocities live half a step offset from positions, and get a kick of q over m times E. The time
+step is set by the speed of light: light may cross only half a cell per step. That makes
+omega_p delta t about 3 times ten to the minus four, far below the leapfrog limit of 2.
+
+---
+
+## Slide 7: The simulation setup
 
 **Bullets**
 - 1D box with periodic edges; two equal electron beams at ±0.1c on a fixed positive background
 - No wave added by hand: the instability grows from tiny unevenness in the particles
-- Two runs: quiet start (evenly spaced particles) for the measurements, random start for the movie
+- Everything shown comes from a quiet start (evenly spaced particles); a random start is only for comparison
 
 **Table**
 
@@ -134,40 +198,39 @@ Here's what I simulated. Everything moves along one line, and the box wraps arou
 edges. Two electron beams move at a tenth of the speed of light in opposite directions, and
 the positive background is held fixed, standing in for ions. The beams are nearly cold, close
 to Chen's cold-beam assumption. I never put a wave in. The instability has to grow from
-whatever small unevenness the particles start with. I used two runs that differ only in where
-the particles start. In the random start they're placed at random, so some cells get a few
-more particles than others, and that makes lumps at every wavelength. In the quiet start
-they're evenly spaced, with each electron sitting on its positive partner, so the starting
-charge is almost perfectly smooth. That alone makes the starting noise about 28 times smaller.
+whatever small unevenness the particles start with. Everything I'll show comes from a quiet
+start. If you place particles at random, some cells get a few more than others, and that makes
+lumps at every wavelength. In the quiet start they're evenly spaced, with each electron sitting
+on its positive partner, so the starting charge is almost perfectly smooth. That alone makes the starting noise about 28 times smaller.
 My main quiet-start run also uses four times as many particles, which cuts it almost twice more,
 so it starts about 48 times quieter than the random start.
 
 ---
 
-## Slide 6: What the electrons do
+## Slide 8: What the electrons do
 
 **Bullets**
 - Each dot: one macroparticle's position and velocity (phase space)
 - Start: two flat beams at ±0.1c
 - Ripples appear, grow, and roll up into vortices
-- Random-start run: it runs long enough to show the whole story
+- Movie runs at full speed to 40/ω_p, then 3× fast-forward to the end (70/ω_p)
 
 **Figure:** `phase_space.mp4` (poster frame `phase_space.png`; click to play)
 
 **Speaker notes**
-This is the simulation itself, from the random-start run, which runs long enough to show the
-whole story. Horizontal is position, vertical is velocity, and every dot is a macroparticle.
+This is the simulation itself. Horizontal is position, vertical is velocity, and every dot is
+a macroparticle.
 Blue is the beam going right, red is the beam going left. At the start you see two flat bands
 at plus and minus 0.1c. At first nothing seems to happen, because the ripple is buried in the
 noise. Then ripples appear and get bigger fast. That's the exponential growth: electrons are
 being sped up and slowed down by the growing wave. Notice that the ripples stay where they
 are. Finally the beams overlap and curl into vortices. Those are electrons trapped in the
-wave, and that's where the growth stops. The next three slides use the quiet-start run to
+wave, and that's where the growth stops. The next three slides
 measure what you just saw.
 
 ---
 
-## Slide 7: The wave grows exponentially
+## Slide 9: The wave grows exponentially
 
 **Bullets**
 - Amplitude of the fastest-growing wave, on a log scale (quiet start)
@@ -191,7 +254,7 @@ clean, linear growth the theory describes.
 
 ---
 
-## Slide 8: The wave grows in place
+## Slide 10: The wave grows in place
 
 **Bullets**
 - Color = electric field (red and blue: opposite directions); position across, time up
@@ -214,7 +277,7 @@ is at most 0.024 times ω_p, which is essentially zero.
 
 ---
 
-## Slide 9: The simulation traces out Chen's growth-rate curve
+## Slide 11: The simulation traces out Chen's growth-rate curve
 
 **Bullets**
 - Black: Chen's growth rate for each wavelength; blue: one measured wave each
@@ -224,12 +287,21 @@ is at most 0.024 times ω_p, which is essentially zero.
 
 **Figure:** `growth_rate_vs_k.png`
 
+**Table** (under the figure)
+
+| | Fastest growth rate | Where |
+|---|---|---|
+| Theory (Chen) | γ_max = ω_p/(2√2) ≈ 0.354 ω_p | kv₀ = √(3/8) ω_p ≈ 0.612 ω_p (k ≈ 6.2 ω_p/c) |
+| Simulation | 0.339 ± 0.014 ω_p | kv₀ ≈ 0.624 ω_p (k ≈ 6.3 ω_p/c), box wave m = 7 |
+
 **Speaker notes**
 This is my favorite result. I measured the growth rate of every wave that fits in the box and
 put them on top of Chen's curve. The black curve is the theory, and each blue dot is one wave
 from the quiet-start simulation. Seven waves land on the curve: they rise, peak near 0.6, and
 fall again, just like the theory. The fastest wave grows at 0.339 times ω_p, against 0.354
-from theory. Averaged over the six waves in the middle, simulation divided by theory is 0.96,
+from theory. The table under the plot puts them side by side: the box only allows certain
+wavelengths, so the closest one, m equals 7, sits at 0.624 instead of exactly 0.612. Averaged
+over the six waves in the middle, simulation divided by theory is 0.96,
 plus or minus 0.04, so the simulation runs about 4 percent slow. The grey points are the slow
 growers: the three longest waves on the left and the one nearest the cutoff on the right. They
 grow so slowly that they barely rise above the noise before the fast waves saturate, so they
@@ -237,7 +309,7 @@ are hard to measure. That's expected, not a failure.
 
 ---
 
-## Slide 10: What we saw
+## Slide 12: What we saw
 
 **Bullets**
 - A wave grew exponentially, along Chen's slope, out of a nearly smooth start
@@ -256,8 +328,8 @@ simulations along the way is that where you place the particles at the start rea
 With random positions the noise was so loud that every measurement scattered by tens of
 percent. Spacing them evenly cut the noise about 28 times and made the theory curve stand out
 clearly. The one place it's still hard is the slow-growing waves, which barely rise above the
-noise before the fast waves saturate. And the random-start run showed what comes after the
-growth: the electrons get trapped in the wave and the beams mix. Thank you, and I'm happy
+noise before the fast waves saturate. And after the growth, the same run shows what Chen
+describes next: the electrons get trapped in the wave and the beams mix. Thank you, and I'm happy
 to take questions.
 
 ---
@@ -284,7 +356,7 @@ growing root turns out to be purely imaginary, which is why the wave stays in pl
 
 ---
 
-## B2: Trapped electrons (Chen Fig. 7.12), random-start run
+## B2: Trapped electrons (Chen Fig. 7.12)
 
 **Bullets**
 - Black line: trapping boundary computed from the simulation's own electric potential
@@ -294,27 +366,27 @@ growing root turns out to be purely imaginary, which is why the wave stays in pl
 **Figure:** `trapping_separatrix.png`
 
 **Speaker notes**
-This is from the random-start run, which runs past saturation. I took its electric potential at
-saturation and computed the boundary between electrons trapped in the wave and electrons that
+I took the electric potential from the simulation at t ≈ 33 over ω_p, shortly after saturation, when the vortices are fully formed, and computed the boundary between electrons trapped in the wave and electrons that
 pass over it: the black line. The simulated electrons swirl inside the boundary and pile up
 along its edge, which is Chen's trapped-orbit picture. Trapping is what stops the growth.
 
 ---
 
-## B3: The beams flatten (Chen Fig. 7.19), random-start run
+## B3: The beams flatten (Chen Fig. 7.19)
 
 **Bullets**
 - Velocity distribution starts as two narrow peaks at ±0.1c
-- Ends as one broad hump, flat-topped near zero, wings out to about ±0.25c
+- By the end (t ≈ 63–70/ω_p): one broad hump near zero, wings out to about ±0.25c
 - The beams' ordered motion has become spread, so nothing is left to drive the wave
 
 **Figure:** `fv_plateau.png`
 
 **Speaker notes**
 This counts how many electrons have each velocity, with the same total in every curve. It
-starts as two narrow peaks, one per beam. By the end the beams have mixed into one broad hump,
-flat-topped near zero velocity. It isn't a perfectly flat plateau, but the free energy of the
-two beams is gone, which is the flattening Chen sketches in Figure 7.19.
+starts as two narrow peaks, one per beam. By the end of the run the beams have mixed into one
+broad hump around zero velocity. It isn't a perfectly flat plateau, but the two separate beams
+are gone, and with them the free energy that drove the wave. That's the flattening Chen
+sketches in Figure 7.19.
 
 ---
 
@@ -366,14 +438,14 @@ uncertain by about 30 percent. That's what motivated the quiet start.
 ## B6: Space-time with the noise made visible
 
 **Bullets**
-- Same as slide 8, but each time row is divided by its own rms field
+- Same as slide 10, but each time row is divided by its own rms field
 - Shows the pattern even while it is still tiny
 - The stripes pick out their positions early and keep them to the end of the run
 
 **Figure:** `spacetime_Ex_normalized.png`
 
 **Speaker notes**
-On slide 8 the early field is too weak to see. Here I rescale each moment in time by its own
+On slide 10 the early field is too weak to see. Here I rescale each moment in time by its own
 typical field strength, so the pattern is visible from the start. You can see the stripes pick
 out their positions early on and stay there.
 
