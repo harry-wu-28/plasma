@@ -47,6 +47,30 @@ conda run -n analysis python ~/plasma/twostream/analysis/twostream_analysis.py \
     --out ~/plasma/twostream/runs/scan/plots
 ```
 
+### CPU (OpenMP) alternative — 2026-11-16
+
+`gpuq` queue waits can be many hours; the baseline runs in **52 min on 16 OpenMP threads**
+(job 11088180, `preemptable`, ~13 ms/step). The shared Kokkos install is CUDA-only, so the
+CPU build lets Entity fetch Kokkos 4.7.1 with OpenMP (`unset Kokkos_ROOT` first — the login
+shell exports it):
+
+```bash
+cd ~/plasma/radiative/entity && unset Kokkos_ROOT
+export OMPI_CXX=/opt/rh/gcc-toolset-13/root/usr/bin/g++ OMPI_CC=/opt/rh/gcc-toolset-13/root/usr/bin/gcc
+cmake -B build_twostream_cpu -DCMAKE_CXX_COMPILER=$OMPI_CXX -DCMAKE_C_COMPILER=$OMPI_CC \
+  -Dpgen=$HOME/plasma/pgens/streaming -Dshape_order=1 -Dmpi=ON -Doutput=ON -Dprecision=single \
+  -Dgpu_aware_mpi=OFF -DKokkos_ENABLE_OPENMP=ON \
+  -DMPI_C_COMPILER=/optnfs/el8/openmpi/5.0/bin/mpicc -DMPI_CXX_COMPILER=/optnfs/el8/openmpi/5.0/bin/mpicxx \
+  -Dadios2_ROOT=/dartfs-hpc/rc/home/5/f007gj5/ADIOS2/build \
+  -DHDF5_ROOT=/dartfs-hpc/rc/home/5/f007gj5/hdf5src/build/hdf5_install
+cmake --build build_twostream_cpu -j8
+ln -sfn $PWD/build_twostream_cpu/src/entity.xc ~/plasma/twostream/entity_cpu.xc
+cd ~/plasma/twostream/runs/baseline/scripts && mkdir -p ../logs && sbatch cpu_twostream.sh
+```
+
+`cpu_twostream.sh` writes to `/dartfs-hpc/scratch/f007hd2/twostream/cpu/` and resumes from the
+latest checkpoint if preempted. Entity's verbose `.log` reaches ~1.6 GB for the baseline.
+
 The build uses the existing `radiative/entity` checkout (v1.3.3rc). The pgen compiled
 cleanly against a clean v1.3.3 checkout (CPU/OpenMP build, 2026-11-16); if it does
 not compile against the rc, clone `--branch v1.3.3` and pass `ENTITY_DIR=...`.
@@ -72,6 +96,22 @@ are noise-limited. This is itself a result for the numerics study (noise floor �
 sets how much linear phase you get), but for a clean γ(k) comparison use the high-ppc
 runs, and always look at `*_modes.png` before trusting the fit window
 (override with `--fit-window T1 T2`). See the PR description for the test numbers.
+
+**Baseline result (CPU run 11088180, 2026-11-16):** field energy grows exponentially over
+t ≈ 40–150 and saturates at t = 188. The auto window picked t = [142, 162] (too late, mode
+coupling near saturation); use `--fit-window 60 140`, which gives γ/γ_th ≈ 0.8–1.2 for the
+band core m = 4–9 (edges m = 1–3, 10–11 are noise-dominated). Total-energy drift stays below
+1e-5. Poisson check from the output: ∂ₓE = C ρ with C ≈ 1.04–1.06 vs expected
+larmor0/skindepth0² = 1. Together with γ matching theory this is consistent with a particle
+force of (q/m)E/larmor0; the separatrix drawn with it encloses the simulated vortices.
+
+## Chen-style figures
+
+`analysis/chen_figures.py RUN --out DIR [--fit-window T1 T2]` redraws the textbook
+two-stream story (Chen, *Introduction to Plasma Physics*): graphical dispersion F(ω) = 1 for
+Chen's beam-through-ions case and for these symmetric beams, Re/Im ω(k) roots with the
+measured γ(k), field-energy timeline, linear bunching + Poisson check, phase-space trapping
+with the separatrix computed from the measured potential, and the f(uₓ, t) plateau.
 
 ## Scan (one knob changed per variant)
 
