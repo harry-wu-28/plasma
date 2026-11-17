@@ -262,4 +262,5 @@ is plausibly the beam temperature, v_th = 0.1 v0, not separately computed); medi
 4.2 clean e-folds (×70); |Re ω| ≤ 0.024 ω_p; slow growers m = 1–3, 11. Seed vs random start:
 48× (+3.9 e-folds) = quiet start 28× (smoke vs random, both ppc0 = 16) × 4× particles 1.8×
 (full vs smoke, both quiet; ≈ √4, as expected if the residual seed is thermal-velocity noise).
-22.4 ms/step on 1 rank × 32 threads.
+Completed in 1 h 30 min 48 s (1 node, 1 rank × 32 threads, 22.2 ms/step average, 245,760 steps,
+1.3 GB output in `/dartfs-hpc/scratch/f007hd2/twostream/quiet/quiet_visual/`).
