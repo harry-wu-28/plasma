@@ -1,110 +1,118 @@
 # Two-stream talk: slide text and speaker notes
 
-10-minute talk + 10 minutes Q&A. Source: `paper/twostream_electron_electron.tex` and the
-baseline run (`twostream/runs/baseline`, CPU job 11088180). The figures are in `talk/figures/`.
+**Framing:** we use a PIC simulation to *see* Chen's two-stream theory happen. The wave grows
+exponentially out of noise, it grows in place without traveling, and the growth rate of each
+wave traces out Chen's curve. The goal is to visualize the physics, not to run a precision test.
 
-**Units used on every slide (same as Chen and the figures):** ω_p is the plasma frequency of
-*all* the electrons (both beams together), so ω_p² = n e²/(ε₀ m) with n = total electron
-density. The wavenumber is written as kv₀/ω_p, and time as t in units of 1/ω_p.
-(The written report uses ω_b, the frequency of one beam: ω_p = √2 ω_b.)
+10-minute talk + 10 minutes Q&A. Main slides 1–10 (~1,400 words of notes), then backup slides
+B1–B8, then likely Q&A. Figures are in `talk/figures/` (random-start versions in
+`talk/figures/random_start/`).
 
-Each slide has a title, at most 4 bullets, the figure to show, and about 1 minute of speaker
-notes in plain English.
+**Two runs, same grid and particle count (ppc0 = 16):**
+- *Quiet start* (job 11092712, `pgens/streaming_quiet`, to t ≈ 21/ω_p): particles start evenly
+  spaced. It gives the growth, space-time and γ(k) figures (slides 7–9, B4, B6).
+- *Random start* (baseline, CPU job 11088180, to t ≈ 70/ω_p): particles start at random positions.
+  It gives the phase-space video, trapping and f(v) figures (slide 6, B2, B3) and the "before"
+  numbers (B5).
+
+**Units on every slide (same as Chen and the figures):** ω_p is the plasma frequency of *all*
+the electrons (both beams together). Wavenumber is written as kv₀/ω_p, time as t in 1/ω_p.
 
 ---
 
-## Slide 1: Can a computer get the textbook answer? Simulating the two-stream instability
+## Slide 1: Watching an Instability Grow: the Two-Stream Instability in a Particle-in-Cell Simulation
 
 **Bullets**
 - Harry Wu, [course name], [date]
-- Particle-in-cell (PIC) simulation with the Entity code
+- Simulated with the Entity particle-in-cell (PIC) code
 
-**Figure:** none (or a small phase_space.png panel as background art)
+**Figure:** `talk/assets/title_vortices.png` (background)
 
 **Speaker notes**
-Hi, I'm Harry. In class we derived the two-stream instability with pen and paper. For this
-project I asked a simple question: if I put the same setup into a real plasma simulation code,
-does it give the same answer? The code is called Entity. It's a particle-in-cell, or PIC, code
-used for research in plasma astrophysics. I'll explain what the two-stream instability is, how
-a PIC code works, and then compare the simulation to Chen's textbook predictions: how fast
-the wave grows, which wavelength grows fastest, and what the electrons look like once the wave
-gets big. The short answer is that the simulation reproduces the theory well, and I'll show
-where it works and where it struggles.
+Hi, I'm Harry. In class we derived the two-stream instability on paper. It's one thing to get
+an equation, and another to see what it actually describes. So for this project I used a
+plasma simulation as a camera. I set up the same two electron beams Chen describes, let the
+computer follow tens of thousands of particles, and watched what happens. I'll show you three
+things the theory predicts and the simulation makes visible: the wave grows exponentially, it
+grows in place without moving, and each wavelength grows at the rate Chen's formula gives.
+I'm not trying to measure anything to many decimal places. The goal is to watch the physics we
+learned actually happen. First, a quick reminder of what the theory says.
 
 ---
 
-## Slide 2: What is the two-stream instability?
+## Slide 2: Two beams, and what Chen predicts
 
 **Bullets**
 - Two electron beams pass through each other at ±v₀
-- A small density ripple makes an electric field
-- The field bunches the electrons → a bigger ripple → a bigger field
-- Result: the ripple grows exponentially, ∝ e^{γt}
+- Ripple → electric field → more bunching → bigger ripple: grows as e^{γt}
+- The growing wave has Re ω = 0: it grows in place and doesn't travel
+- Fastest growth: γ_max = ω_p/(2√2) ≈ 0.354 ω_p, at kv₀ ≈ 0.61 ω_p
 
-**Figure:** none, or a simple cartoon of two arrows and a wavy density line
+**Figure:** bunching cartoon (two rows of beam particles with arrows, as in the deck)
 
 **Speaker notes**
-Picture two streams of electrons going opposite ways, with a fixed background of positive
-charge so the plasma is neutral overall. If everything is perfectly uniform, nothing happens.
-But real plasmas are never perfectly uniform. Say there's a tiny ripple, with slightly more
-electrons in one place. That ripple makes an electric field. The field speeds up some
-electrons and slows down others, and that makes them pile up even more where they were
-already piled up. More bunching means a stronger field, which means more bunching. That's a
-feedback loop, and it makes the ripple grow exponentially. This is what we call an
-instability. The number we care about is the growth rate γ: how fast the ripple grows.
+Picture two streams of electrons going opposite ways, with a fixed positive background so the
+plasma is neutral. Suppose there's a tiny ripple, with slightly more electrons in one place.
+That ripple makes an electric field, which speeds up some electrons and slows others, so they
+bunch up even more. More bunching means a stronger field, which means more bunching. That
+feedback loop makes the ripple grow exponentially, like e to the gamma t. Chen's cold-fluid
+theory predicts a growth rate for every wavelength, with the fastest wave growing at about
+0.35 times the plasma frequency. It also predicts that the growing wave has no real
+frequency. So the wave doesn't travel left or right. It just gets stronger where it is. That
+makes sense: the two beams are mirror images, so there's no preferred direction to move.
 
 ---
 
-## Slide 3: Theory: Chen's graphical method
+## Slide 3: How PIC works: particles and a grid
 
 **Bullets**
-- Dispersion relation: 1 = ½ω_p² [1/(ω − kv₀)² + 1/(ω + kv₀)²]
-- Short waves: 4 real roots → the wave just oscillates
-- Long waves (kv₀ < ω_p): 2 complex roots → the wave grows
-- Fastest growth: γ_max = ω_p/(2√2) ≈ 0.354 ω_p at kv₀ ≈ 0.61 ω_p
+- Too many real electrons to follow one by one
+- Macroparticles: each one stands for many electrons, with the same charge-to-mass ratio
+- Electric field is stored only at points on a grid
+- Particles move freely between grid points
 
-**Figure:** `dispersion_stable_unstable.png`
+**Figure:** sketch of dots (particles) scattered over a row of grid points
 
 **Speaker notes**
-From the cold-fluid equations (continuity, Newton's law, and Gauss's law) you get this
-dispersion relation. It tells you which frequencies ω go with each wavenumber k. Chen solves
-it graphically: plot the right-hand side and see where it crosses one. On the left, for a short
-wave, the curve crosses one four times, so all four roots are real, and the wave just
-oscillates. On the right, for a longer wave, it only crosses twice. The equation has four roots,
-so the missing two must be complex, and a complex frequency means exponential growth. Every
-wave with kv₀ below ω_p is unstable. Solving exactly, the fastest wave grows at ω_p over 2√2,
-about 0.354 ω_p, at kv₀ ≈ 0.61 ω_p. These are the numbers I'll test.
+So how does the simulation work? A real plasma has far too many electrons to follow one at a
+time. A particle-in-cell code uses macroparticles instead. Each macroparticle stands for a huge
+number of real electrons. It carries their combined charge and mass, so its charge-to-mass
+ratio is the same as one electron's, and it moves exactly the way a single electron would.
+The particles can be anywhere, but the electric field is stored only at evenly spaced points
+on a grid. Those are the "cells" in particle-in-cell. Storing the field on a grid is what
+makes this affordable: each particle only talks to the few grid points next to it. The trick
+is passing information back and forth between the particles and the grid.
 
 ---
 
-## Slide 4: How a particle-in-cell code works
+## Slide 4: How PIC works: the loop
 
 **Bullets**
-- Macroparticles: each one stands for many electrons (same charge-to-mass ratio)
-- Fields live on a grid; particles move freely between grid points
-- Each time step: deposit current → solve for fields → interpolate fields to particles → push particles
-- Repeat ~250,000 times
+- Deposit: particle motion → current on the grid
+- Field solve: current → new electric field
+- Interpolate: field on the grid → force on each particle
+- Push: Newton's law moves each particle; repeat each time step
 
-**Figure:** a loop diagram of the four steps (deposit → field solve → interpolate → push)
+**Figure:** loop diagram, deposit → field solve → interpolate → push
 
 **Speaker notes**
-A real plasma has far too many electrons to simulate one by one. So a PIC code uses
-macroparticles. Each one represents a huge number of real electrons, but it has the same
-charge-to-mass ratio, so it moves exactly like a single electron would. The electric field is
-stored only at points on a grid. Every time step does four things. First, each particle's
-motion is turned into current on the nearby grid points. Second, the code updates the electric
-field from that current. Third, it reads the field back at each particle's position. Fourth, it
-uses Newton's law to push each particle to a new velocity and position. Then it repeats. My
-run did this about 250,000 times, and it took 52 minutes on 16 CPU cores.
+Every time step, the code goes around this loop. First, deposit: each particle's motion is
+turned into electric current on the nearby grid points. Second, field solve: the code uses
+that current to update the electric field on the grid. Third, interpolate: it reads the field
+back at each particle's position, so every particle knows what force it feels. Fourth, push:
+Newton's law gives each particle a new velocity and position. Then it starts over. Each step
+is a tiny slice of time, so the quiet-start run went around this loop about 75,000 times, which
+took about 13 minutes on 32 CPU cores. Nothing about the two-stream instability is built into these
+rules. If the instability shows up, it comes from the particles and fields alone.
 
 ---
 
 ## Slide 5: The simulation setup
 
 **Bullets**
-- 1D box with periodic edges (a particle leaving the right side comes back on the left)
-- Two equal electron beams at ±0.1c on a fixed positive background
-- No wave is added by hand: random particle positions supply the first ripple
+- 1D box with periodic edges; two equal electron beams at ±0.1c on a fixed positive background
+- No wave added by hand: the instability grows from tiny unevenness in the particles
+- Two runs: quiet start (evenly spaced particles) for the measurements, random start for the movie
 
 **Table**
 
@@ -116,208 +124,325 @@ run did this about 250,000 times, and it took 52 minutes on 16 CPU cores.
 | Particles | 4 per cell per beam (~49,000 per beam) |
 | Time step and numerics | ω_pΔt ≈ 3×10⁻⁴; Boris push, cloud-in-cell shape, zigzag current deposit |
 
-**Figure:** none (the table is the content)
-
 **Speaker notes**
-Here's the setup. It's one-dimensional, so everything moves along x, and the box wraps around
-at the edges. There are two electron beams moving at a tenth of the speed of light in opposite
-directions. The positive background is made of particles that are held fixed, standing in for
-ions. The beams are almost cold: the random thermal speed is only 10% of the beam speed, which
-is close to Chen's cold-beam assumption. The box fits about seven wavelengths of the fastest
-wave. The grid is very fine, about 17 cells per Debye length, which avoids an artificial
-heating problem PIC codes have when the grid is too coarse. One important detail: I don't add
-any wave by hand. The particles start at random positions, and that randomness is the seed.
+Here's what I simulated. Everything moves along one line, and the box wraps around at the
+edges. Two electron beams move at a tenth of the speed of light in opposite directions, and
+the positive background is held fixed, standing in for ions. The beams are nearly cold, close
+to Chen's cold-beam assumption. I never put a wave in. The instability has to grow from
+whatever small unevenness the particles start with. I used two runs that differ only in where
+the particles start. In the random start they're placed at random, so some cells get a few
+more particles than others, and that makes lumps at every wavelength. In the quiet start
+they're evenly spaced, with each electron sitting on its positive partner, so the starting
+charge is almost perfectly smooth. That makes the starting noise about 28 times smaller.
 
 ---
 
-## Slide 6: What the electrons do (phase space)
+## Slide 6: What the electrons do
 
 **Bullets**
-- Each dot: one macroparticle's position and velocity
-- Start: two flat, separate beams
-- Growth: the beams develop ripples
-- Late: the beams merge into swirling vortices (trapped electrons)
+- Each dot: one macroparticle's position and velocity (phase space)
+- Start: two flat beams at ±0.1c
+- Ripples appear, grow, and roll up into vortices
+- Random-start run: it runs long enough to show the whole story
 
-**Figure:** `phase_space.png` (t = 0, 10, 13 /ω_p)
+**Figure:** `phase_space.mp4` (poster frame `phase_space.png`; click to play)
 
 **Speaker notes**
-This is phase space: horizontal is position, vertical is velocity, and each dot is one
-macroparticle. Blue is the beam going right, red is the beam going left. At the start you see
-two flat lines at plus and minus 0.1c, just two uniform beams. By time 10 over ω_p the beams have
-developed ripples. That's the instability: electrons are being sped up and slowed down by the
-growing wave. By time 13 the ripples are so big that the beams overlap and curl into
-vortices. Those are electrons that are trapped inside the wave's potential wells. This is the
-nonlinear stage, where the simple linear theory stops applying and the growth stops.
+This is the simulation itself, from the random-start run, which runs long enough to show the
+whole story. Horizontal is position, vertical is velocity, and every dot is a macroparticle.
+Blue is the beam going right, red is the beam going left. At the start you see two flat bands
+at plus and minus 0.1c. At first nothing seems to happen, because the ripple is buried in the
+noise. Then ripples appear and get bigger fast. That's the exponential growth: electrons are
+being sped up and slowed down by the growing wave. Notice that the ripples stay where they
+are. Finally the beams overlap and curl into vortices. Those are electrons trapped in the
+wave, and that's where the growth stops. The next three slides use the quiet-start run to
+measure what you just saw.
 
 ---
 
-## Slide 7: Growth of the fastest wave vs. prediction
+## Slide 7: The wave grows exponentially
 
 **Bullets**
-- Take the Fourier transform of E(x) to get the amplitude of each wave
-- On a log scale, exponential growth is a straight line
-- Dashed line: theory slope, not fitted, only started at the same point
-- Matches until the wave saturates at t ≈ 13/ω_p
+- Amplitude of the fastest-growing wave, on a log scale (quiet start)
+- Dashed line: Chen's growth rate, not fitted, only started at the same point
+- Follows the theory slope for about 4 e-folds, a factor of ~66
+- Still growing when the run ends at t ≈ 21/ω_p
 
 **Figure:** `growth_fastest_mode.png`
 
 **Speaker notes**
-To measure the growth rate, I take the electric field along the box and Fourier transform it.
-That splits it into individual waves, and I follow the amplitude of each one over time. This
-plot is the wave closest to the fastest-growing one. The vertical axis is logarithmic, so
-exponential growth shows up as a straight line. The dashed line is Chen's prediction. I didn't
-fit it to the data; I just started it at the same point and let it run with the theoretical
-slope. In the shaded region the simulation follows it, but notice how short that region is:
-the wave grows by only about 3 e-folds before it stops. Before that, the field is still
-settling down from the random starting noise. After about 13 over ω_p, the wave stops
-growing, because it has trapped the electrons, as in the vortices on the previous slide.
+To see the growth, I break the electric field into its separate waves with a Fourier
+transform, and follow how strong one wave is over time. This is the wave closest to the
+fastest-growing one, from the quiet start. The vertical axis is logarithmic, so exponential
+growth shows up as a straight line. The dashed line is Chen's prediction. I didn't fit it; I
+just started it at the same point and gave it the theoretical slope. After the first few
+plasma periods, while the field settles, the simulation sits right on that line for about four
+e-folds, which is a factor of about 66. And it's still growing when the run ends. The wave
+hasn't yet become strong enough to trap the electrons, so everything here is the clean,
+linear growth the theory describes.
 
 ---
 
-## Slide 8: Growth rate at every wavelength
+## Slide 8: The wave grows in place
 
 **Bullets**
-- Each dot: the measured growth rate of one wave in the box
-- Fastest wave (m=7): simulation 0.36 ± 0.12 ω_p vs. theory 0.354 ω_p
-- Averaged over the well-resolved waves m=4–9: simulation/theory = 0.99 ± 0.16
-- Individual waves scatter ~±30% (random-noise start, only ~3 e-folds of growth)
+- Color = electric field (red and blue: opposite directions); position across, time up
+- Almost blank at first: the quiet start has very little noise
+- Stripes appear and darken, and they are vertical: the wave stays where it is
+- Measured real frequency |Re ω| ≤ 0.014 ω_p, essentially zero
+
+**Figure:** `spacetime_Ex.png`
+
+**Speaker notes**
+This picture tests the second prediction. Position is across, time goes up, and color is the
+electric field: red points one way, blue the other. For the first ten or so units of time it's
+almost blank, because the quiet start begins with so little noise. Then red and blue stripes
+appear and get darker as they grow. Now look at the direction of the stripes. They go
+straight up. A stripe that stays at the same position as time goes on is a wave that isn't
+moving. If the wave traveled, the stripes would tilt to one side. This is what Re ω equals
+zero means: the wave grows where it is. Measuring it directly, the real part of the frequency
+is at most 0.014 times ω_p, which is essentially zero.
+
+---
+
+## Slide 9: The simulation traces out Chen's growth-rate curve
+
+**Bullets**
+- Black: Chen's growth rate for each wavelength; blue: one measured wave each
+- Fastest wave (m=7): 0.342 ± 0.024 ω_p vs. theory 0.354 ω_p
+- Waves m=4–9: simulation/theory = 0.99 ± 0.06; typical spread 15%
+- Grey: slow growers (the longest waves and those near the cutoff) stay close to the noise
 
 **Figure:** `growth_rate_vs_k.png`
 
 **Speaker notes**
-Now I do the same measurement for every wave the box allows and compare to the full theory
-curve. The black curve is Chen's prediction, and the dots are the simulation. For the fastest
-wave, the simulation gives 0.36 times ω_p, and theory says 0.354. But the uncertainty is big,
-plus or minus 0.12, because the answer changes depending on exactly which stretch of time I
-fit. If I average over the waves that are well resolved, the middle of the band from m equals
-4 to 9, the ratio of simulation to theory comes out at 0.99 plus or minus 0.16. So on average the
-simulation agrees with Chen. Individual waves scatter by around 30 percent. That's because
-the run starts from random particle noise, with no wave put in by hand, and the fastest wave
-grows only about 3 e-folds before it saturates, so there's very little clean growth to
-measure. The points at the far edges don't tell us much.
+This is my favorite result. I measured the growth rate of every wave that fits in the box and
+put them on top of Chen's curve. The black curve is the theory, and each blue dot is one wave
+from the quiet-start simulation. The dots trace out the shape of the curve: they rise, peak
+near 0.6, and fall again. The fastest wave grows at 0.342 times ω_p, against 0.354 from theory.
+Averaged over the six waves in the middle, simulation divided by theory is 0.99, plus or minus
+0.06. The grey points are the slow growers: the longest waves on the left, and the shortest
+ones near the cutoff on the right. Theory says they grow slowly, so by the end of the run they
+have barely risen above the noise, and the strong waves nearby push them around. That makes
+them hard to measure, and that's expected, not a failure.
 
 ---
 
-## Slide 9: After growth stops: the plateau
+## Slide 10: What we saw
 
 **Bullets**
-- The velocity distribution starts as two sharp peaks, one per beam
-- After saturation it flattens into a broad plateau
-- The beams have mixed, so there is no free energy left to drive the wave (Chen Fig. 7.19)
+- A wave grew exponentially, along Chen's slope, out of a nearly smooth start
+- It grew in place, without traveling, as Re ω = 0 predicts
+- Each wavelength's growth rate traced out Chen's curve (0.99 ± 0.06)
+- PIC lesson: where the particles start matters, and a quiet start made the physics clear
 
-**Figure:** `fv_plateau.png` (full size)
+**Figure:** none, or a small repeat of `growth_rate_vs_k.png`
 
 **Speaker notes**
-Linear theory stops when the wave gets big, but Chen also describes what happens next, and the
-simulation shows that too. This is the velocity distribution: how many electrons have each
-velocity. At the start there are two sharp peaks, one for each beam, at plus and minus 0.1c.
-During growth the peaks spread toward each other. By the end they have flattened into one
-broad plateau centered on zero velocity. The two beams have mixed together, so there's no
-longer a separate fast stream to feed the wave, and the instability shuts itself off. This is
-the picture Chen sketches in Figure 7.19, and the simulation reproduces it.
+To wrap up: I used a particle-in-cell simulation as a camera on the two-stream instability.
+It shows a wave growing exponentially at the rate Chen predicts. It shows the wave growing in
+place without traveling, which is what a purely imaginary frequency means. And when I measure
+every wavelength, the growth rates trace out Chen's curve. One thing I learned about
+simulations along the way is that where you place the particles at the start really matters.
+With random positions the noise was so loud that every measurement scattered by tens of
+percent. Spacing them evenly cut the noise about 28 times and made the theory curve stand out
+clearly. The one place it's still hard is the slow-growing waves, which barely rise above the
+noise in the time I ran. And the random-start run, which ran longer, showed what comes after
+the growth: the electrons get trapped in the wave and the beams mix. Thank you, and I'm happy
+to take questions.
 
 ---
 
-## Slide 10: Limits of PIC, and conclusion
+# Backup slides
+
+## B1: Chen's graphical method (stable vs unstable)
 
 **Bullets**
-- PIC reproduces Chen: growth rates agree on average (m=4–9: simulation/theory = 0.99 ± 0.16), plus trapping and the plateau
-- Limit 1: random-noise start → only ~3 e-folds of growth → individual waves scatter ~±30%
-- Limit 2: slow-growing waves are hard to measure; only waves that fit the box exist
-- Energy is conserved to better than 1 part in 100,000 over the run
+- Dispersion relation: 1 = ½ω_p² [1/(ω − kv₀)² + 1/(ω + kv₀)²]
+- Short waves: the curve crosses 1 four times → 4 real roots → just oscillates
+- Long waves (kv₀ < ω_p): only 2 crossings → the other 2 roots are complex → grows
+- Exact solution: γ_max = ω_p/(2√2) at kv₀ = √(3/8) ω_p ≈ 0.61 ω_p
 
-**Figure:** none, or repeat the growth-rate plot small
+**Figure:** `dispersion_stable_unstable.png`
 
 **Speaker notes**
-To sum up: a particle-in-cell simulation reproduces the textbook two-stream instability. On
-average the growth rates agree with Chen, the wave doesn't oscillate, just as theory predicts,
-and the nonlinear stage shows the trapping and plateau that Chen describes. There are limits.
-The run starts from random particle noise, and with only four particles per cell per beam that
-noise is large, so the fastest wave grows only about 3 e-folds before it saturates. That's why
-any single wave's growth rate is uncertain by about 30 percent, and why the slow-growing waves
-are hard to measure. Also, a periodic box only allows certain wavelengths.
-And PIC isn't perfect at conserving energy, though here the total energy stayed constant to
-better than one part in 100,000. Thank you, and I'm happy to take questions.
+From the cold-fluid equations (continuity, Newton's law, and Gauss's law) you get this
+dispersion relation, which says which frequencies go with each wavenumber. Chen solves it by
+plotting the right-hand side and seeing where it crosses one. For a short wave it crosses four
+times, so all four roots are real and the wave only oscillates. For a longer wave it crosses
+only twice, so the other two roots must be complex, and a complex frequency means growth. The
+growing root turns out to be purely imaginary, which is why the wave stays in place.
 
 ---
 
-## Backup slide B1: Trapped electrons follow the predicted orbits (Chen Fig. 7.12)
+## B2: Trapped electrons (Chen Fig. 7.12), random-start run
 
 **Bullets**
 - Black line: trapping boundary computed from the simulation's own electric potential
 - Dots: simulated electrons (blue = right-moving beam, red = left-moving beam)
 - Electrons inside the boundary are trapped in the wave's potential wells
 
-**Figure:** `trapping_separatrix.png` (full size)
+**Figure:** `trapping_separatrix.png`
 
 **Speaker notes**
-This is for questions about trapping. I took the electric potential from the simulation at
-saturation and computed the boundary between electrons that are trapped in the wave and
-electrons that pass over it. That's the black line. The dots are the simulated electrons, blue
-for the beam moving right and red for the beam moving left. They swirl inside the boundary and
-pile up along its edge, which is exactly what Chen's trapped-orbit picture in Figure 7.12
-predicts. So the electrons stop the growth by getting trapped, just as the theory says.
+This is from the random-start run, which runs past saturation. I took its electric potential at
+saturation and computed the boundary between electrons trapped in the wave and electrons that
+pass over it: the black line. The simulated electrons swirl inside the boundary and pile up
+along its edge, which is Chen's trapped-orbit picture. Trapping is what stops the growth.
+
+---
+
+## B3: The beams flatten (Chen Fig. 7.19), random-start run
+
+**Bullets**
+- Velocity distribution starts as two narrow peaks at ±0.1c
+- Ends as one broad hump, flat-topped near zero, wings out to about ±0.25c
+- The beams' ordered motion has become spread, so nothing is left to drive the wave
+
+**Figure:** `fv_plateau.png`
+
+**Speaker notes**
+This counts how many electrons have each velocity, with the same total in every curve. It
+starts as two narrow peaks, one per beam. By the end the beams have mixed into one broad hump,
+flat-topped near zero velocity. It isn't a perfectly flat plateau, but the free energy of the
+two beams is gone, which is the flattening Chen sketches in Figure 7.19.
+
+---
+
+## B4: Why the starting positions matter: a PIC lesson
+
+**Bullets**
+- Random positions → cell-to-cell counting noise at every wavelength (~1/√N)
+- Evenly spaced positions, each electron on its positive partner → almost no starting charge
+- Starting noise 28× lower → about 3.3 more clean e-folds
+- Result: quiet-start growth rates follow Chen's curve (m=4–9: 0.99 ± 0.06, spread 15%)
+
+**Figure:** `gamma_k_quiet_vs_random.png` (quiet-start points with Chen's curve)
+
+**Speaker notes**
+The same beams, grid, and number of particles can give a clear picture or a blurry one,
+depending only on where the particles start. With random positions, some cells get more
+particles than others by chance, which seeds every wavelength with a fairly large ripple. In my
+first run that left only about three e-folds of growth, and single waves scattered by about
+30 percent, although the average still came out at 0.99 plus or minus 0.16. With evenly spaced
+positions, and each electron sitting on its positive partner, the starting charge is nearly
+zero everywhere. The velocities are still random, so some noise creeps back in, but the
+effective seed is about 28 times smaller. That buys about 3.3 extra e-folds of clean growth,
+and the measured growth rates settle onto Chen's curve, as this plot shows. Same physics, much
+clearer picture.
+
+---
+
+## B5: Before: the random-start numbers
+
+**Bullets**
+- Random start: only ~3 e-folds of growth before saturation
+- Fastest wave (m=7): 0.36 ± 0.12 ω_p vs. theory 0.354 ω_p
+- Waves m=4–9: simulation/theory = 0.99 ± 0.16; single waves scatter ~±30%
+- Sliding the fit window within t = 40–160 (code units) shifts γ by 0.06–0.19 ω_p
+
+**Figure:** `random_start/growth_rate_vs_k.png`
+
+**Speaker notes**
+This is where I started. With random starting positions the noise floor was high, so the
+fastest wave grew only about three e-folds before trapping stopped it. Over such a short
+stretch the fitted growth rate depended on exactly which times I chose, by up to about 0.19
+ω_p. On average it still agreed with theory, 0.99 plus or minus 0.16, but any single wave was
+uncertain by about 30 percent. That's what motivated the quiet start.
+
+---
+
+## B6: Space-time with the noise made visible
+
+**Bullets**
+- Same as slide 8, but each time row is divided by its own rms field
+- Shows the pattern even while it is still tiny
+- The stripes pick out their positions early and keep them to the end of the run
+
+**Figure:** `spacetime_Ex_normalized.png`
+
+**Speaker notes**
+On slide 8 the early field is too weak to see. Here I rescale each moment in time by its own
+typical field strength, so the pattern is visible from the start. You can see the stripes pick
+out their positions early on and stay there.
+
+---
+
+## B7: Numerical choices
+
+**Bullets**
+- Boris push; cloud-in-cell (first-order) particle shape; zigzag charge-conserving current deposit
+- Time step: light crosses half a cell per step (CFL = 0.5) → ω_pΔt ≈ 3×10⁻⁴
+- Grid: Debye length ≈ 17 cells, so no grid-heating instability
+- Random-start run: total energy constant to better than 1 part in 100,000
+
+**Speaker notes**
+These are the settings behind both runs. The time step is set by the speed of light, because
+Entity solves the full Maxwell equations, and it ends up far smaller than the plasma needs. The
+grid is fine enough to avoid the artificial heating that coarse grids cause.
+
+---
+
+## B8: With ions instead: the Buneman instability
+
+**Bullets**
+- Electron beam through ions at rest: the heavy ions respond slowly
+- Growth ∝ (m/M)^{1/3}: γ_max ≈ 0.054 ω_pe at kv₀ ≈ ω_pe for hydrogen
+- That wave does travel slowly: Re ω ≈ 0.036 ω_pe
+- Needs a fixed "return current" in the code; run in progress
+
+**Speaker notes**
+If one beam is replaced by ions at rest, you get the Buneman instability. Because ions are
+heavy, it grows six to seven times slower, and unlike our case the growing wave has a real
+frequency, so it drifts. Simulating it needs an extra fixed current to stop the beam's own
+current from pulling it back. That run is still in progress.
 
 ---
 
 ## Likely Q&A
 
-**Q1. Why is the simulation noisy, and how does that depend on the number of particles?**
-Each cell holds only a few particles at random positions, so the count in a cell fluctuates by
-about √N. The relative noise is about 1/√N, here 1/√4 = 50% per beam per cell. That large
-starting noise means the fastest wave grows only about 3 e-folds before saturating, which is
-why single-wave growth rates scatter by about ±30%. More particles would give a quieter start,
-a longer window of clean growth, and better measurements. The cost is that the run takes proportionally longer.
+**Q1. Where does the noise come from, and how did the quiet start reduce it?**
+With random positions, the number of particles in a cell fluctuates by about √N, a relative
+noise of about 1/√N, and that seeds every wavelength. Evenly spacing the particles, with each
+electron on its positive partner, makes the starting charge nearly zero. The velocities are
+still random, so some noise comes back, but the effective seed is about 28 times lower.
 
-**Q2. Why did you fit only between t ≈ 4 and 10/ω_p?**
-Before about 4/ω_p, the field is still settling from the random starting positions, and all
-waves jump to a noise level. After about 10/ω_p, the wave is big enough that nonlinear effects
-(trapping, waves interacting) bend the curve over. The straight-line exponential stage is in
-between. In code units the window is t = 60–140, and saturation is at t = 188. Because that
-stage is so short, the answer depends on the exact window: moving it anywhere within
-t = 40–160 changes a single wave's γ by 0.06–0.19 ω_p. That window-to-window spread is the
-± 0.12 ω_p I quote for the fastest wave.
+**Q2. Isn't the quiet start cheating?**
+No. The physics (beams, speeds, temperature, grid, number of particles) is identical. It only
+removes counting noise that is much larger than in a real plasma, because a real plasma has
+vastly more particles per cell. The instability still has to grow on its own, and it is not
+told which wavelength to pick.
 
-**Q3. Why is the real part of the frequency zero, so the wave doesn't move?**
-The two beams are identical except for direction, so the setup has no preferred direction and
-the wave can't travel either way. It just grows in place. Mathematically, the growing root is
-purely imaginary. The simulation agrees: the measured real frequency is near zero, within about
-0.07 ω_p.
+**Q3. How did you measure the growth rate, and where do the error bars come from?**
+For each wave, I fit straight lines to the log of its amplitude over many short windows
+sliding across t ≈ 8–20/ω_p, and take the median. The error bar is the spread between
+windows, so it shows how much the answer depends on which stretch of time I pick.
 
-**Q4. How did you choose the time step?**
+**Q4. Why does the wave stay in place (Re ω = 0)?**
+The two beams are identical except for direction, so there's no preferred direction for the
+wave to move. Mathematically the growing root is purely imaginary. In the quiet-start run the
+measured real frequency is at most 0.014 ω_p.
+
+**Q5. Why are the grey points (slow growers) so uncertain?**
+Theory says the longest waves (m=1–3) and the waves near the cutoff (m=10–11) grow slowly. By
+the end of the run they have barely risen above the noise, and the strongly growing waves near
+the peak also push them around. So their fits are noisy, even with the quiet start.
+
+**Q6. Why does the quiet-start run end before the wave saturates?**
+It was a short test run, to t ≈ 21/ω_p. With less noise the wave starts smaller and needs
+longer to saturate, about 22–25/ω_p. Everything on slides 7–9 is in the clean linear stage,
+which is what the theory describes. The random-start run shows what happens after.
+
+**Q7. How did you choose the time step?**
 Entity solves the full Maxwell equations, so light must not cross more than one cell per step.
-I used half a cell per step (CFL = 0.5). That makes the step tiny compared with the plasma
-oscillation, ω_pΔt ≈ 3×10⁻⁴, far below the stability limit of 2 for the leapfrog push. The
-light-speed rule, not the plasma, sets the step.
+I used half a cell per step (CFL = 0.5), which makes ω_pΔt ≈ 3×10⁻⁴, far below the stability
+limit of 2 for the particle push.
 
-**Q5. What particle shape did you use, and why does it matter?**
+**Q8. What particle shape did you use?**
 Cloud-in-cell, which is first order: each particle's charge is split between the two nearest
-grid points according to distance. Smoother, higher-order shapes reduce noise but cost more
-per particle. I didn't vary the shape. This project shows that one reasonable setting gets the
-right answer; it doesn't compare settings.
+grid points according to distance. Smoother shapes reduce noise but cost more. I didn't vary
+it.
 
-**Q6. What would change with ions instead of a second electron beam (the Buneman instability)?**
-If an electron beam streams through ions at rest, the heavy ions respond slowly. The growth
-rate scales like (m/M)^{1/3}: for hydrogen, γ_max ≈ 0.054 ω_pe at kv₀ ≈ ω_pe, about 6–7 times
-slower than here. The wave also oscillates (Re ω ≈ 0.036 ω_pe) instead of standing still. In
-the code it needs an extra trick, a fixed "return current", to keep the beam from being pulled
-back by its own current. I have that run going, but it isn't part of this talk.
-
-**Q7. Why do the points at the edges of the γ(k) plot disagree?**
-The longest waves (m=1–3) grow so slowly that in the short time before saturation they barely
-rise above the noise, so their fits are uninformative. The wave near the cutoff (m=11) sits
-high because it is driven by the strongly growing waves near the peak (nonlinear mode
-coupling), not by its own linear growth. That's why I average only over m=4–9.
-
-**Q8. How do you know the simulation isn't just heating up artificially?**
-Two checks. The grid resolves the Debye length well (about 17 cells per Debye length), so the
-known grid-heating instability shouldn't occur. And the total energy (particles plus field)
-stays constant to better than 1 part in 100,000 over the whole run.
-
-**Q9. How would you get a more precise number?**
-Seed the wave, or average several runs with different random seeds. Seeding means starting
-with a small, clean sine-wave ripple instead of random noise, so the wave grows for many more
-e-folds before it saturates. Averaging runs with different random starting positions beats
-down the run-to-run scatter by about 1/√(number of runs). Both would need small code changes
-in Entity: the setup only loads uniform beams, and the random seed is fixed in the code rather
-than set in the input file.
+**Q9. What changes with ions (the Buneman instability)?**
+See backup B8: the growth is slower, scaling as (m/M)^{1/3}, and the wave drifts slowly
+(Re ω ≈ 0.036 ω_pe) instead of standing still.
