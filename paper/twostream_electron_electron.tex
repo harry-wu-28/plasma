@@ -188,8 +188,9 @@ The input \texttt{densities = [0.5, 0.5]} sets the density of each electron--pos
 $n_b=0.25\,n_0$ and $\wb=\omega_{p0}\sqrt{0.25}=0.05$. Equation~\eqref{eq:gmax} then predicts
 $\gamma_{\max}=0.025$ at $k_{\max}\approx0.435$ ($\lambda_{\max}\approx14.4$). A periodic box
 of length $L=100$ allows only $k=2\pi m/L$; the $m=7$ mode has $k\vz/\wb=0.875$, close to the
-peak at $0.866$. The run lasts $\wb t=50$, about 25 $e$-foldings, enough to see growth out of
-the noise and saturation. Table~\ref{tab:params} lists all parameters. The Debye length of
+peak at $0.866$. The run lasts $\wb t=50$, or 25 growth times $1/\gamma_{\max}$. Because it
+starts from random particle noise (no seeded wave), the fastest wave grows only about 3
+$e$-folds before it saturates; the rest of the run shows the nonlinear stage. Table~\ref{tab:params} lists all parameters. The Debye length of
 all the electrons together is $\lambda_D=v_{th}/\wpe=0.14$, about 17 cells ($\Delta x/\lambda_D\approx0.06$),
 far from the regime $\lambda_D\ll\Delta x$ where finite-grid heating occurs.
 \todo{update if the production runs change any of these values.}
@@ -238,15 +239,31 @@ over several fit windows as the uncertainty (Fig.~\ref{fig:growth}).
 \label{sec:results}
 
 \paragraph{Growth rate versus wavenumber.}
-Figure~\ref{fig:gammak} compares the measured $\gamma(k)$ with Eq.~\eqref{eq:gamma}.
-\todo{describe agreement, value of $\gamma_{\max}/\wb$ and $k_{\max}\vz/\wb$, behavior near
-the cutoff $k\vz=\sqrt2\,\wb$.}
+Figure~\ref{fig:gammak} compares the measured $\gamma(k)$ with Eq.~\eqref{eq:gamma}. For the
+fastest wave ($m=7$, $k\vz/\wb=0.875$) we measure $\gamma=0.51\pm0.17\,\wb$
+($0.36\pm0.12\,\wpe$), against the theory value $\wb/2$ ($0.354\,\wpe$). The uncertainty is
+large because moving the fit window within $t=40$--$160$ changes the result by
+$0.06$--$0.19\,\wpe$. Averaged over the well-resolved waves $m=4$--$9$, the ratio of measured to
+theoretical growth rate is $0.99\pm0.16$ (per-wave ratios 0.85, 0.96, 0.93, 1.01, 1.23, 0.98), so
+on average the simulation is consistent with the cold-beam theory. The uncertainty propagates
+each wave's fit-window spread. We quote it instead of the smaller scatter-based standard error
+($0.05$) because all six waves grow from the same noise realization and so are not independent. Individual waves scatter by about $\pm30\%$ ($\pm25$--$50\%$). The scatter
+comes from the random-noise start: with only about 3 $e$-folds of clean growth, each fit is
+short. The longest waves ($m=1$--$3$) barely rise above the noise and are uninformative, and the
+wave nearest the cutoff $k\vz=\sqrt2\,\wb$ ($m=11$) sits high because the strongly growing
+modes drive it. A more precise test would seed the wave or average several runs with different
+random seeds. Both need code changes: the \texttt{streaming} problem generator loads only uniform
+drifting Maxwellians, and \textsc{Entity}'s random seed is a compile-time constant
+(\texttt{constant::RandomSeed}), not an input parameter.
 
 \begin{figure}[t]
   \centering
   \figorbox{ee_gamma_vs_k.pdf}{\columnwidth}{measured $\gamma(k)/\wb$ vs.\ $k\vz/\wb$ with theory}
-  \caption{Measured growth rate (points) compared with the cold-beam theory,
-  Eq.~\eqref{eq:gamma} (line). \todo{caption details.}}
+  \caption{Measured growth rate of each box wave (points) compared with the cold-beam theory,
+  Eq.~\eqref{eq:gamma} (line). Error bars show the spread of $\gamma$ over fit windows within
+  $t=40$--$160$. The well-resolved waves $m=4$--$9$ agree with theory on average
+  (ratio $0.99\pm0.16$) but scatter individually by about $\pm30\%$; $m=1$--$3$ are
+  noise-dominated and $m=11$ is driven by the fastest modes.}
   \label{fig:gammak}
 \end{figure}
 
@@ -254,9 +271,11 @@ the cutoff $k\vz=\sqrt2\,\wb$.}
 \section{Discussion and conclusions}
 \label{sec:discussion}
 
-\todo{Summarize: (i) how well PIC recovers $\gamma(k)$ and $\gamma_{\max}$; (ii) limitations,
-e.g.\ the small thermal spread lowers $\gamma$ slightly relative to the cold result, and only box
-modes are sampled.}
+\todo{Summarize: (i) PIC recovers $\gamma(k)$ on average (ratio $0.99\pm0.16$ for $m=4$--$9$),
+with $\sim\pm30\%$ scatter per wave; (ii) limitations: random-noise start gives only $\sim3$
+$e$-folds of growth, the small thermal spread lowers $\gamma$ slightly, and only box modes are
+sampled; (iii) seeding or averaging over random seeds would sharpen the test, but both need code
+changes (pgen initialization; hard-coded \texttt{constant::RandomSeed}).}
 
 {\small\setlength{\bibsep}{1pt}
 \bibliographystyle{unsrtnat}
