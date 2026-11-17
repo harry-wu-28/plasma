@@ -1,5 +1,6 @@
-% Two-stream instability as a test of PIC numerics -- final report
-% Builds on Overleaf as-is (pdfLaTeX + BibTeX), or locally with `latexmk main.tex`.
+% Electron-electron two-stream instability as a test of PIC numerics -- final report
+% Builds on Overleaf as-is (pdfLaTeX + BibTeX), or locally with
+% `latexmk twostream_electron_electron.tex`. Companion: twostream_electron_ion.tex.
 % Missing figures render as labelled placeholder boxes; see figures/README.md.
 % Audience: an undergraduate taking a first course in plasma physics.
 \documentclass[10pt,twocolumn,letterpaper]{article}
@@ -51,8 +52,7 @@ into a large electric wave: the two-stream instability. For cold, equal beams, t
 the growth rate exactly, with maximum $\gamma_{\max}=\wb/2$, where $\wb$ is one beam's plasma
 frequency. We reproduce the instability with the particle-in-cell (PIC) code \textsc{Entity}
 and compare the measured growth rate with theory. Because the answer is known, the comparison
-measures the error of the simulation method itself. We vary the number of particles, the grid
-spacing, and the particle shape, and see how each affects the accuracy and the artificial heating.
+shows whether the simulation, with its approximations, reproduces the analytic result.
 \todo{one sentence on the headline result once runs are in.}
 \end{abstract}
 
@@ -72,9 +72,9 @@ For cold beams (all electrons in a beam share one velocity) of equal density, th
 can be calculated exactly, which makes this a standard test for computer
 simulations~\citep{BirdsallLangdon1991}. A particle-in-cell (PIC) code cannot follow every
 electron in a real plasma. It follows a smaller number of ``macroparticles'' and computes the
-field on a grid. Both shortcuts cause errors: too few particles make the simulation noisy, and
-the grid can artificially heat the plasma~\citep{Langdon1970,Okuda1972}. Comparing with the
-exact answer lets us measure these errors.
+field on a grid. Both shortcuts are approximations: too few particles make the simulation noisy,
+and the grid can artificially heat the plasma~\citep{Langdon1970,Okuda1972}. Here we show that,
+with suitable settings, a PIC simulation reproduces the exact growth rate.
 
 % ===========================================================================
 \section{Linear theory}
@@ -169,9 +169,9 @@ PIC codes do not conserve energy exactly. On a grid, waves whose wavenumbers dif
 multiple of $2\pi/\Delta x$ look identical at every grid point (\emph{aliasing}), so
 short-wavelength noise can pose as longer waves. When the Debye length is much smaller than a
 cell, $\lambda_D\ll\Delta x$, this heats the plasma until $\lambda_D\sim\Delta x$: the
-finite-grid instability~\citep{Langdon1970,Okuda1972}. It should weaken with smoother shapes and
-finer grids. Heating feeds back on the physics, because a velocity spread $v_{th}$ smears out
-the bunching and lowers $\gamma$ once $k v_{th}\sim\gamma$.
+finite-grid instability~\citep{Langdon1970,Okuda1972}. Heating would matter here, because a
+velocity spread $v_{th}$ smears out the bunching and lowers $\gamma$ once $k v_{th}\sim\gamma$, so
+we choose a grid fine enough to avoid it (Sec.~\ref{sec:setup}).
 
 % ===========================================================================
 \section{Simulation setup}
@@ -190,15 +190,14 @@ $n_b=0.25\,n_0$ and $\wb=\omega_{p0}\sqrt{0.25}=0.05$. Equation~\eqref{eq:gmax} 
 $\gamma_{\max}=0.025$ at $k_{\max}\approx0.435$ ($\lambda_{\max}\approx14.4$). A periodic box
 of length $L=100$ allows only $k=2\pi m/L$; the $m=7$ mode has $k\vz/\wb=0.875$, close to the
 peak at $0.866$. The run lasts $\wb t=50$, about 25 $e$-foldings, enough to see growth out of
-the noise and saturation. Table~\ref{tab:params} lists the baseline; each scan changes one of
-$\ppc$, $\Delta x$, or the shape. The baseline cell is only $\Delta x/\lambda_D\approx0.04$ of
-the beam Debye length $\lambda_D=v_{th}/\wb=0.2$, so the resolution scan must enlarge cells more
-than tenfold to reach finite-grid heating.
+the noise and saturation. Table~\ref{tab:params} lists all parameters. A cell is only
+$\Delta x/\lambda_D\approx0.04$ of the beam Debye length $\lambda_D=v_{th}/\wb=0.2$, far from the
+regime $\lambda_D\ll\Delta x$ where finite-grid heating occurs.
 \todo{update if the production runs change any of these values.}
 
 \begin{table}[t]
   \centering
-  \caption{Baseline parameters from \texttt{twostream.toml} in code units ($c=1$), with
+  \caption{Simulation parameters from \texttt{twostream.toml} in code units ($c=1$), with
   dimensionless ratios on the right.}
   \label{tab:params}
   \small
@@ -228,7 +227,7 @@ over several fit windows as the uncertainty (Fig.~\ref{fig:growth}).
 
 \begin{figure}[t]
   \centering
-  \figorbox{growth_mode.pdf}{\columnwidth}{$\ln|\tilde E_k(t)|$ for $k\approx k_{\max}$, with fit}
+  \figorbox{ee_growth_mode.pdf}{\columnwidth}{$\ln|\tilde E_k(t)|$ for $k\approx k_{\max}$, with fit}
   \caption{Amplitude of the fastest-growing wave versus time. The dashed line is the
   straight-line fit during exponential growth; its slope is $\gamma$. \todo{caption details.}}
   \label{fig:growth}
@@ -245,35 +244,19 @@ the cutoff $k\vz=\sqrt2\,\wb$.}
 
 \begin{figure}[t]
   \centering
-  \figorbox{gamma_vs_k.pdf}{\columnwidth}{measured $\gamma(k)/\wb$ vs.\ $k\vz/\wb$ with theory}
+  \figorbox{ee_gamma_vs_k.pdf}{\columnwidth}{measured $\gamma(k)/\wb$ vs.\ $k\vz/\wb$ with theory}
   \caption{Measured growth rate (points) compared with the cold-beam theory,
   Eq.~\eqref{eq:gamma} (line). \todo{caption details.}}
   \label{fig:gammak}
-\end{figure}
-
-\paragraph{Effect of the numerical settings.}
-Figure~\ref{fig:conv} shows how the error in $\gamma_{\max}$ and the total-energy drift depend
-on $\ppc$, $\Delta x$, and shape. Fewer particles raise the initial noise ($\propto\ppc^{-1/2}$),
-which should shorten the growth window without changing its slope. A grid too coarse to resolve
-$\lambda_D$ should instead heat the beams, and warmer beams grow more slowly, lowering $\gamma$.
-\todo{replace expectations with what the runs show.}
-
-\begin{figure}[t]
-  \centering
-  \figorbox{convergence.pdf}{\columnwidth}{error in $\gamma_{\max}$ and energy drift vs.\ $\ppc$, $\Delta x$, shape}
-  \caption{How the measured $\gamma_{\max}$ and the total-energy drift change with the
-  numerical settings. \todo{caption details.}}
-  \label{fig:conv}
 \end{figure}
 
 % ===========================================================================
 \section{Discussion and conclusions}
 \label{sec:discussion}
 
-\todo{Summarize: (i) how well PIC recovers $\gamma(k)$; (ii) which parameter matters most for
-accuracy; (iii) the cost trade-off between $\ppc$ and shape order; (iv) limitations, e.g.\ a
-finite thermal spread reduces $\gamma$ relative to the cold result, and only box modes are
-sampled.}
+\todo{Summarize: (i) how well PIC recovers $\gamma(k)$ and $\gamma_{\max}$; (ii) limitations,
+e.g.\ the small thermal spread lowers $\gamma$ slightly relative to the cold result, and only box
+modes are sampled.}
 
 {\small\setlength{\bibsep}{1pt}
 \bibliographystyle{unsrtnat}
